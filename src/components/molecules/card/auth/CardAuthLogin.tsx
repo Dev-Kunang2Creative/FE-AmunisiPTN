@@ -45,7 +45,7 @@ export default function CardAuthLogin() {
 
             <div className="flex items-center gap-3">
               <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground">KIKI DUYULOPMI</span>
+              <span className="text-xs text-muted-foreground">atau</span>
               <Separator className="flex-1" />
             </div>
 
