@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { Trash2, Ticket } from "lucide-react";
 import ActionButton from "@/components/molecules/datatable/ActionButton";
 import {
   DropdownMenuItem,
@@ -14,7 +14,9 @@ interface DataUserProps {
   deleteUserHandler: (data: User) => void;
 }
 
-export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (props) => [
+export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
+  props,
+) => [
   {
     id: "index",
     header: "No",
@@ -24,7 +26,9 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (props) 
     id: "name",
     header: "Nama",
     cell: ({ row }) => (
-      <p suppressHydrationWarning className="font-medium">{row.original.name}</p>
+      <p suppressHydrationWarning className="font-medium">
+        {row.original.name}
+      </p>
     ),
   },
   {
@@ -49,6 +53,16 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (props) 
         </Badge>
       );
     },
+  },
+  {
+    id: "ticket_balance",
+    header: "Tiket",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1.5 font-semibold">
+        <Ticket className="w-4 h-4" />
+        <span suppressHydrationWarning>{row.original.ticket_balance ?? 0}</span>
+      </div>
+    ),
   },
   {
     id: "phone_number",
