@@ -1,33 +1,50 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { ExchangeGoogleCodeHandler } from "@/http/auth/login-google";
 
 function OAuthCallbackHandler() {
   const router = useRouter();
   const params = useSearchParams();
+  const processedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const token = params.get("token");
+    const code = params.get("code");
 
-    if (!token) {
+    if (!code) {
       router.push("/login");
       return;
     }
 
-    signIn("credentials", {
-      token,
-      redirect: false,
-    }).then((res) => {
-      if (!res || res.error) {
-        router.push("/login");
-        return;
-      }
+    if (processedCodeRef.current === code) {
+      return;
+    }
 
-      router.push("/dashboard");
-    });
+    processedCodeRef.current = code;
+
+    const completeLogin = async () => {
+      try {
+        const { token } = await ExchangeGoogleCodeHandler(code);
+        const res = await signIn("credentials", {
+          token,
+          redirect: false,
+        });
+
+        if (!res || res.error) {
+          router.push("/login");
+          return;
+        }
+
+        router.push("/dashboard");
+      } catch {
+        router.push("/login");
+      }
+    };
+
+    completeLogin();
   }, [params, router]);
 
   return (

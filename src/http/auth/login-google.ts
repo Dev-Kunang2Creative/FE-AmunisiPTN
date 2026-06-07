@@ -6,6 +6,10 @@ interface GoogleRedirectResponse {
   url: string;
 }
 
+interface ExchangeGoogleCodeResponse {
+  token: string;
+}
+
 export const GetGoogleRedirectHandler =
   async (): Promise<GoogleRedirectResponse> => {
     const { data } = await api.get<GoogleRedirectResponse>(
@@ -14,6 +18,17 @@ export const GetGoogleRedirectHandler =
 
     return data;
   };
+
+export const ExchangeGoogleCodeHandler = async (
+  code: string,
+): Promise<ExchangeGoogleCodeResponse> => {
+  const { data } = await api.post<ExchangeGoogleCodeResponse>(
+    "/auth/google/exchange-code",
+    { code },
+  );
+
+  return data;
+};
 
 export const useGetGoogleRedirect = ({
   options,
