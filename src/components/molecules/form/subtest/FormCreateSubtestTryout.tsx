@@ -23,6 +23,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,16 +138,20 @@ export default function FormCreateSubtestTryout({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <FieldGroup>
+                <FieldGroup className="flex flex-col md:flex-row items-start md:items-end">
                   {/* SUBTEST SELECT */}
                   <Controller
                     control={form.control}
                     name={`subtests.${index}.subtest_id`}
                     render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
+                      <Field
+                        data-invalid={fieldState.invalid}
+                        className="w-full md:flex-[2]"
+                      >
                         <FieldLabel>Subtest</FieldLabel>
 
                         <Popover
+                          modal={true}
                           open={openSubtest === index}
                           onOpenChange={(open) =>
                             setOpenSubtest(open ? index : null)
@@ -169,31 +174,33 @@ export default function FormCreateSubtestTryout({
                           <PopoverContent className="p-0">
                             <Command>
                               <CommandInput placeholder="Cari subtest..." />
-                              <CommandEmpty>Tidak ditemukan</CommandEmpty>
+                              <CommandList>
+                                <CommandEmpty>Tidak ditemukan</CommandEmpty>
 
-                              <CommandGroup>
-                                {data?.data?.map((subtest) => (
-                                  <CommandItem
-                                    key={subtest.id}
-                                    value={subtest.name}
-                                    onSelect={() => {
-                                      field.onChange(subtest.id);
-                                      setOpenSubtest(null);
-                                    }}
-                                  >
-                                    {subtest.name}
+                                <CommandGroup>
+                                  {data?.data?.map((subtest) => (
+                                    <CommandItem
+                                      key={subtest.id}
+                                      value={subtest.name}
+                                      onSelect={() => {
+                                        field.onChange(subtest.id);
+                                        setOpenSubtest(null);
+                                      }}
+                                    >
+                                      {subtest.name}
 
-                                    <Check
-                                      className={cn(
-                                        "ml-auto",
-                                        field.value === subtest.id
-                                          ? "opacity-100"
-                                          : "opacity-0",
-                                      )}
-                                    />
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
+                                      <Check
+                                        className={cn(
+                                          "ml-auto",
+                                          field.value === subtest.id
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
                             </Command>
                           </PopoverContent>
                         </Popover>
@@ -210,7 +217,10 @@ export default function FormCreateSubtestTryout({
                     control={form.control}
                     name={`subtests.${index}.duration_minutes`}
                     render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
+                      <Field
+                        data-invalid={fieldState.invalid}
+                        className="w-full md:flex-1"
+                      >
                         <FieldLabel>Durasi (Menit)</FieldLabel>
 
                         <Input
@@ -233,7 +243,7 @@ export default function FormCreateSubtestTryout({
                     control={form.control}
                     name={`subtests.${index}.is_active`}
                     render={({ field }) => (
-                      <Field>
+                      <Field className="w-full md:flex-[0.5]">
                         <FieldLabel>Status</FieldLabel>
 
                         <div className="flex items-center gap-3">

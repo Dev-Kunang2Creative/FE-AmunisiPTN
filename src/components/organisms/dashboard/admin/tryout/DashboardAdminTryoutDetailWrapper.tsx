@@ -11,7 +11,7 @@ import { useGetSubtestByTryout } from "@/http/subtest/get-subtest-by-tryout";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { subtestTryoutColumns } from "@/components/atoms/datacolumn/DataSubtestByTryout";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus, Download, Images } from "lucide-react";
+import { Eye, Plus, Download, Users } from "lucide-react";
 import { useState } from "react";
 import DialogCreateSubtestTryout from "@/components/atoms/dialog/subtest/DialogCreateSubtestTryout";
 import Image from "next/image";
@@ -202,16 +202,14 @@ export default function DashboardAdminTryoutDetailWrapper({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex md:items-center md:flex-row flex-col md:justify-between gap-4">
               <h3 className="font-medium text-lg">Subtes</h3>
-              <div className="flex gap-3 items-center">
-                {data?.data.is_free && (
-                  <Button size={"lg"} variant={"outline"} asChild>
-                    <Link href={`/dashboard/admin/try-out/${id}/bukti-follow`}>
-                      <Images className="mr-2 h-4 w-4" /> Lihat Bukti Follow
-                    </Link>
-                  </Button>
-                )}
+              <div className="flex md:flex-row flex-wrap gap-3 items-center">
+                <Button size={"lg"} variant={"outline"} asChild>
+                  <Link href={`/dashboard/admin/try-out/${id}/participants`}>
+                    <Users className="mr-2 h-4 w-4" /> Lihat Peserta
+                  </Link>
+                </Button>
                 <Button size={"lg"} variant={"outline"} asChild>
                   <Link href={`/dashboard/admin/try-out/${id}/result`}>
                     <Eye className="mr-2 h-4 w-4" /> Lihat Hasil
