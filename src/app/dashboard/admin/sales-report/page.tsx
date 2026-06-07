@@ -88,8 +88,11 @@ const THIS_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [THIS_YEAR, THIS_YEAR - 1, THIS_YEAR - 2, THIS_YEAR - 3];
 const PER_PAGE_OPTIONS = [10, 15, 25, 50];
 const ALL_FILTER = "all";
-const salesExportColumns: AdminExportColumn<SalesReportRow>[] = [
-  { header: "Periode", accessor: (row) => monthLabel(row.month, row.year) },
+const salesExportColumns: AdminExportColumn<any>[] = [
+  {
+    header: "Periode",
+    accessor: (row) => row.period_label || monthLabel(row.month, row.year),
+  },
   { header: "Produk/TO", accessor: (row) => row.product_name },
   {
     header: "Harga",
@@ -276,34 +279,59 @@ export default function SalesReportPage() {
   );
 
   const filteredSalesRows = useMemo(() => {
-    return salesRows
-      .filter(
-        (row) =>
-          salesProductFilter === ALL_FILTER ||
-          row.product_name === salesProductFilter,
-      )
-      .sort((a, b) => {
-        if (salesSort.key === "period_start") {
-          return sortNumber(
-            toTimestamp(a.period_start),
-            toTimestamp(b.period_start),
-            salesSort.direction,
-          );
-        }
-        if (salesSort.key === "product_name") {
-          return sortString(
-            a.product_name,
-            b.product_name,
-            salesSort.direction,
-          );
-        }
+    return salesRows.filter(
+      (row) =>
+        salesProductFilter === ALL_FILTER ||
+        row.product_name === salesProductFilter,
+    );
+  }, [salesProductFilter, salesRows]);
+
+  const tableRows = useMemo(() => {
+    const map = new Map<string, any>();
+
+    filteredSalesRows.forEach((row) => {
+      const key = `${row.product_name}-${row.average_price}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.total_item_sold += Number(row.total_item_sold || 0);
+        existing.order_count += Number(row.order_count || 0);
+        existing.total_sales += Number(row.total_sales || 0);
+        // Do not recalculate average_price, they are explicitly grouped by it
+      } else {
+        const periodLabel = month
+          ? monthLabel(month, year || THIS_YEAR)
+          : year
+            ? `Tahun ${year}`
+            : "Semua Periode";
+
+        map.set(key, {
+          ...row,
+          total_item_sold: Number(row.total_item_sold || 0),
+          order_count: Number(row.order_count || 0),
+          total_sales: Number(row.total_sales || 0),
+          period_label: periodLabel,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (salesSort.key === "period_start") {
         return sortNumber(
-          a[salesSort.key],
-          b[salesSort.key],
+          toTimestamp(a.period_start),
+          toTimestamp(b.period_start),
           salesSort.direction,
         );
-      });
-  }, [salesProductFilter, salesRows, salesSort]);
+      }
+      if (salesSort.key === "product_name") {
+        return sortString(a.product_name, b.product_name, salesSort.direction);
+      }
+      return sortNumber(
+        a[salesSort.key],
+        b[salesSort.key],
+        salesSort.direction,
+      );
+    });
+  }, [filteredSalesRows, salesSort, month, year]);
 
   const filteredSalesSummary = useMemo(() => {
     let totalSalesTryout = 0;
@@ -386,11 +414,11 @@ export default function SalesReportPage() {
 
   const salesTotalPages = Math.max(
     1,
-    Math.ceil(filteredSalesRows.length / salesPerPage),
+    Math.ceil(tableRows.length / salesPerPage),
   );
 
   const safeSalesPage = Math.min(salesPage, salesTotalPages);
-  const paginatedSalesRows = filteredSalesRows.slice(
+  const paginatedSalesRows = tableRows.slice(
     (safeSalesPage - 1) * salesPerPage,
     safeSalesPage * salesPerPage,
   );
@@ -780,7 +808,7 @@ export default function SalesReportPage() {
                     className="border-green-200 text-green-700 hover:bg-green-50"
                     onClick={() =>
                       exportAdminRowsToExcel({
-                        rows: filteredSalesRows,
+                        rows: tableRows,
                         columns: salesExportColumns,
                         title: "laporan-penjualan",
                       })
@@ -796,7 +824,7 @@ export default function SalesReportPage() {
                     className="border-blue-200 text-blue-700 hover:bg-blue-50"
                     onClick={() =>
                       exportAdminRowsToPdf({
-                        rows: filteredSalesRows,
+                        rows: tableRows,
                         columns: salesExportColumns,
                         title: "laporan-penjualan",
                         filterSummary: `Tahun: ${year ?? "Semua"}; Bulan: ${month ? MONTH_NAMES[month] : "Semua"}; Produk: ${salesProductFilter === ALL_FILTER ? "Semua" : salesProductFilter}`,
@@ -875,13 +903,13 @@ export default function SalesReportPage() {
                     <TableBody>
                       {paginatedSalesRows.map((row, index) => (
                         <TableRow
-                          key={`${row.product_name}-${row.year}-${row.month}`}
+                          key={`${row.product_name}-${row.average_price}`}
                         >
                           <TableCell className="px-4 text-gray-400">
                             {(safeSalesPage - 1) * salesPerPage + index + 1}
                           </TableCell>
                           <TableCell className="px-4 text-gray-600">
-                            {monthLabel(row.month, row.year)}
+                            {row.period_label}
                           </TableCell>
                           <TableCell className="px-4 font-medium text-gray-800">
                             <div className="flex flex-col gap-1 items-start">
@@ -942,7 +970,7 @@ export default function SalesReportPage() {
 
                   <SmartPagination
                     page={safeSalesPage}
-                    totalItems={filteredSalesRows.length}
+                    totalItems={tableRows.length}
                     perPage={salesPerPage}
                     perPageOptions={PER_PAGE_OPTIONS}
                     itemLabel="baris"
