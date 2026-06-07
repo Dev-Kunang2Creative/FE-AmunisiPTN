@@ -11,7 +11,7 @@ import { useGetSubtestByTryout } from "@/http/subtest/get-subtest-by-tryout";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { subtestTryoutColumns } from "@/components/atoms/datacolumn/DataSubtestByTryout";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus, Download, ExternalLink, Images } from "lucide-react";
+import { Eye, Plus, Download, Images } from "lucide-react";
 import { useState } from "react";
 import DialogCreateSubtestTryout from "@/components/atoms/dialog/subtest/DialogCreateSubtestTryout";
 import Image from "next/image";
@@ -109,10 +109,6 @@ export default function DashboardAdminTryoutDetailWrapper({
     setIsDialogOpen(true);
   };
 
-  const proofAccesses = (data?.data.user_accesses ?? []).filter(
-    (access) => (access.proof_image_urls?.length ?? 0) > 0,
-  );
-
   return (
     <section>
       <Card>
@@ -205,72 +201,20 @@ export default function DashboardAdminTryoutDetailWrapper({
             </div>
           </div>
 
-          {data?.data.is_free && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-medium text-lg">Bukti Follow Instagram</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Bukti gambar yang diunggah peserta saat daftar tryout gratis.
-                  </p>
-                </div>
-                <Badge variant="secondary" className="shrink-0">
-                  {proofAccesses.length} peserta
-                </Badge>
-              </div>
-
-              {proofAccesses.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {proofAccesses.map((access) => (
-                    <div key={access.id} className="rounded-xl border p-4 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{access.user?.name ?? "Peserta"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{access.user?.email ?? "-"}</p>
-                        </div>
-                        <Badge variant="outline" className="shrink-0">
-                          {access.proof_image_urls?.length ?? 0} gambar
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        {(access.proof_image_urls ?? []).map((url, index) => (
-                          <div key={`${access.id}-${url}-${index}`} className="overflow-hidden rounded-lg border bg-muted">
-                            <img
-                              src={url}
-                              alt={`Bukti follow ${access.user?.name ?? "peserta"} ${index + 1}`}
-                              className="h-36 w-full object-contain"
-                            />
-                            <div className="border-t bg-background px-2 py-1.5">
-                              <Button variant="ghost" size="sm" className="h-7 w-full text-xs" asChild>
-                                <a href={url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="w-3 h-3 mr-1" />
-                                  Buka bukti {index + 1}
-                                </a>
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  <Images className="mx-auto mb-2 size-6" />
-                  Belum ada bukti follow yang diunggah.
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <h3 className="font-medium text-lg">Subtes</h3>
               <div className="flex gap-3 items-center">
+                {data?.data.is_free && (
+                  <Button size={"lg"} variant={"outline"} asChild>
+                    <Link href={`/dashboard/admin/try-out/${id}/bukti-follow`}>
+                      <Images className="mr-2 h-4 w-4" /> Lihat Bukti Follow
+                    </Link>
+                  </Button>
+                )}
                 <Button size={"lg"} variant={"outline"} asChild>
                   <Link href={`/dashboard/admin/try-out/${id}/result`}>
-                    <Eye /> Lihat Hasil
+                    <Eye className="mr-2 h-4 w-4" /> Lihat Hasil
                   </Link>
                 </Button>
                 <Button
@@ -280,12 +224,16 @@ export default function DashboardAdminTryoutDetailWrapper({
                   disabled={isDownloadingPdf}
                 >
                   <Download
-                    className={isDownloadingPdf ? "animate-pulse" : ""}
+                    className={
+                      isDownloadingPdf
+                        ? "animate-pulse mr-2 h-4 w-4"
+                        : "mr-2 h-4 w-4"
+                    }
                   />{" "}
                   Download PDF
                 </Button>
                 <Button size={"lg"} onClick={handleOpenDialog}>
-                  <Plus /> Tambahkan Subtes
+                  <Plus className="mr-2 h-4 w-4" /> Tambahkan Subtes
                 </Button>
               </div>
             </div>
