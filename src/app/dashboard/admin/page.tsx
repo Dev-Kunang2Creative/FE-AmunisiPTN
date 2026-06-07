@@ -4,35 +4,57 @@ import { useSession } from "next-auth/react";
 import { useGetAdminStats } from "@/http/stats/get-admin-stats";
 import { formatPrice } from "@/utils/format-price";
 import {
-  Users, BookOpen, ShoppingCart, Banknote,
-  UserPlus, FileQuestion, Package, Activity, Trophy,
+  Users,
+  BookOpen,
+  ShoppingCart,
+  Banknote,
+  UserPlus,
+  FileQuestion,
+  Package,
+  Activity,
+  Trophy,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
-  LineChart, Line, CartesianGrid,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:   "#F59E0B",
-  paid:      "#3B82F6",
-  approved:  "#10B981",
-  rejected:  "#EF4444",
+  pending: "#F59E0B",
+  paid: "#3B82F6",
+  approved: "#10B981",
+  rejected: "#EF4444",
   cancelled: "#6B7280",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pending:   "Menunggu",
-  paid:      "Sudah Bayar",
-  approved:  "Disetujui",
-  rejected:  "Ditolak",
+  pending: "Menunggu",
+  paid: "Sudah Bayar",
+  approved: "Disetujui",
+  rejected: "Ditolak",
   cancelled: "Dibatalkan",
 };
 
 function StatCard({
-  label, value, sub, icon: Icon, color, isLoading,
+  label,
+  value,
+  sub,
+  icon: Icon,
+  color,
+  isLoading,
 }: {
   label: string;
   value: string | number;
@@ -43,7 +65,7 @@ function StatCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 pt-6">
+      <CardContent className="flex items-center gap-4 h-full">
         <div className={`p-3 rounded-xl shrink-0 ${color}`}>
           <Icon className="w-6 h-6" />
         </div>
@@ -69,13 +91,13 @@ export default function DashboardAdminPage() {
   const stats = data?.data;
 
   const pieData = (stats?.order_by_status ?? []).map((s) => ({
-    name:  STATUS_LABELS[s.status] ?? s.status,
+    name: STATUS_LABELS[s.status] ?? s.status,
     value: s.count,
-    fill:  STATUS_COLORS[s.status] ?? "#9CA3AF",
+    fill: STATUS_COLORS[s.status] ?? "#9CA3AF",
   }));
 
   const topTryoutsData = (stats?.top_tryouts ?? []).map((t) => ({
-    name:     t.title.length > 20 ? t.title.slice(0, 20) + "…" : t.title,
+    name: t.title.length > 20 ? t.title.slice(0, 20) + "…" : t.title,
     fullName: t.title,
     enrolled: t.enrolled,
   }));
@@ -160,20 +182,32 @@ export default function DashboardAdminPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">Memuat data...</div>
+              <div className="h-64 flex items-center justify-center text-gray-400">
+                Memuat data...
+              </div>
             ) : (stats?.monthly_revenue?.length ?? 0) === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data pendapatan.</div>
+              <div className="h-64 flex items-center justify-center text-gray-400">
+                Belum ada data pendapatan.
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={256}>
                 <BarChart data={stats!.monthly_revenue}>
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                   <YAxis
                     tickFormatter={(v) =>
-                      new Intl.NumberFormat("id-ID", { notation: "compact", maximumFractionDigits: 1 }).format(v)
+                      new Intl.NumberFormat("id-ID", {
+                        notation: "compact",
+                        maximumFractionDigits: 1,
+                      }).format(v)
                     }
                     tick={{ fontSize: 12 }}
                   />
-                  <Tooltip formatter={(value) => [formatPrice(Number(value)), "Pendapatan"]} />
+                  <Tooltip
+                    formatter={(value) => [
+                      formatPrice(Number(value)),
+                      "Pendapatan",
+                    ]}
+                  />
                   <Bar dataKey="total" fill="#004AAB" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -188,9 +222,13 @@ export default function DashboardAdminPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">Memuat data...</div>
+              <div className="h-64 flex items-center justify-center text-gray-400">
+                Memuat data...
+              </div>
             ) : pieData.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data transaksi.</div>
+              <div className="h-64 flex items-center justify-center text-gray-400">
+                Belum ada data transaksi.
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={256}>
                 <PieChart>
@@ -201,7 +239,9 @@ export default function DashboardAdminPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     labelLine={false}
                   >
                     {pieData.map((entry, index) => (
@@ -221,13 +261,19 @@ export default function DashboardAdminPage() {
         {/* Line Chart - Pendaftaran 30 hari */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pendaftaran Pengguna (30 Hari Terakhir)</CardTitle>
+            <CardTitle className="text-base">
+              Pendaftaran Pengguna (30 Hari Terakhir)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">Memuat data...</div>
+              <div className="h-56 flex items-center justify-center text-gray-400">
+                Memuat data...
+              </div>
             ) : (stats?.user_registrations?.length ?? 0) === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">Belum ada pendaftar baru.</div>
+              <div className="h-56 flex items-center justify-center text-gray-400">
+                Belum ada pendaftar baru.
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={224}>
                 <LineChart data={stats!.user_registrations}>
@@ -266,26 +312,41 @@ export default function DashboardAdminPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">Memuat data...</div>
+              <div className="h-56 flex items-center justify-center text-gray-400">
+                Memuat data...
+              </div>
             ) : topTryoutsData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">Belum ada data enrollment.</div>
+              <div className="h-56 flex items-center justify-center text-gray-400">
+                Belum ada data enrollment.
+              </div>
             ) : (
               <div className="space-y-3">
                 {topTryoutsData.map((t, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className={`text-sm font-bold w-5 shrink-0 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-orange-400" : "text-gray-300"}`}>
+                    <span
+                      className={`text-sm font-bold w-5 shrink-0 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-orange-400" : "text-gray-300"}`}
+                    >
                       #{i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" title={t.fullName}>{t.fullName}</p>
+                      <p
+                        className="text-sm font-medium truncate"
+                        title={t.fullName}
+                      >
+                        {t.fullName}
+                      </p>
                       <div className="mt-1 bg-gray-100 rounded-full h-2">
                         <div
                           className="bg-[#004AAB] h-2 rounded-full transition-all"
-                          style={{ width: `${Math.min(100, (t.enrolled / (topTryoutsData[0]?.enrolled || 1)) * 100)}%` }}
+                          style={{
+                            width: `${Math.min(100, (t.enrolled / (topTryoutsData[0]?.enrolled || 1)) * 100)}%`,
+                          }}
                         />
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 shrink-0">{t.enrolled}</span>
+                    <span className="text-sm font-semibold text-gray-700 shrink-0">
+                      {t.enrolled}
+                    </span>
                   </div>
                 ))}
               </div>
