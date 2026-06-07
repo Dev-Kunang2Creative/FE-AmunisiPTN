@@ -78,14 +78,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const midtransUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+  const midtransUrl =
+    process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+      ? "https://app.midtrans.com/snap/snap.js"
+      : "https://app.sandbox.midtrans.com/snap/snap.js";
 
   return (
     <html lang="en">
       <body className={`${rubik.variable} antialiased font-rubik`}>
         <Script
           src={midtransUrl}
-          data-client-key="Mid-client-FFwXSkw-f8NkBzEM"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
           strategy="afterInteractive"
         />
         <GlobalProvider>{children}</GlobalProvider>
