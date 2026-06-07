@@ -14,31 +14,35 @@ import {
   Activity,
   Trophy,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
+  CartesianGrid,
   PieChart,
   Pie,
   Cell,
-  Legend,
   LineChart,
   Line,
-  CartesianGrid,
 } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "#F59E0B",
-  paid: "#3B82F6",
-  approved: "#10B981",
-  rejected: "#EF4444",
-  cancelled: "#6B7280",
-};
+import { Progress } from "@/components/ui/progress";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Menunggu",
@@ -48,35 +52,65 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Dibatalkan",
 };
 
+const pieChartConfig = {
+  count: { label: "Total" },
+  pending: { label: "Menunggu", color: "#F59E0B" }, // amber-500
+  paid: { label: "Sudah Bayar", color: "#3B82F6" }, // blue-500
+  approved: { label: "Disetujui", color: "#10B981" }, // emerald-500
+  rejected: { label: "Ditolak", color: "#EF4444" }, // red-500
+  cancelled: { label: "Dibatalkan", color: "#6B7280" }, // gray-500
+} satisfies ChartConfig;
+
+const barChartConfig = {
+  total: { label: "Pendapatan", color: "var(--primary)" },
+} satisfies ChartConfig;
+
+const lineChartConfig = {
+  count: { label: "Pendaftar", color: "var(--primary)" },
+} satisfies ChartConfig;
+
 function StatCard({
   label,
   value,
   sub,
   icon: Icon,
-  color,
+  iconColorClass = "bg-primary/10 text-primary",
   isLoading,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon: React.ElementType;
-  color: string;
+  iconColorClass?: string;
   isLoading: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 h-full">
-        <div className={`p-3 rounded-xl shrink-0 ${color}`}>
-          <Icon className="w-6 h-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-xl font-bold text-gray-900 truncate">
-            {isLoading ? "..." : value}
-          </p>
-          {sub && !isLoading && (
-            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
-          )}
+    <Card className="group relative overflow-hidden border-0 shadow-sm ring-1 ring-border/5">
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/30 opacity-100" />
+      <CardContent className="relative">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2 min-w-0">
+            <p className="text-sm font-medium tracking-tight text-muted-foreground truncate">
+              {label}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-2xl font-semibold tracking-tight truncate">
+                {isLoading ? (
+                  <span className="text-muted-foreground/50">...</span>
+                ) : (
+                  value
+                )}
+              </h2>
+            </div>
+            {sub && !isLoading && (
+              <p className="text-xs font-medium text-muted-foreground/80 truncate">
+                {sub}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-2xl shrink-0 ${iconColorClass}`}>
+            <Icon className="w-5 h-5" strokeWidth={2} />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -92,8 +126,9 @@ export default function DashboardAdminPage() {
 
   const pieData = (stats?.order_by_status ?? []).map((s) => ({
     name: STATUS_LABELS[s.status] ?? s.status,
-    value: s.count,
-    fill: STATUS_COLORS[s.status] ?? "#9CA3AF",
+    status: s.status,
+    count: s.count,
+    fill: `var(--color-${s.status})`,
   }));
 
   const topTryoutsData = (stats?.top_tryouts ?? []).map((t) => ({
@@ -103,96 +138,117 @@ export default function DashboardAdminPage() {
   }));
 
   return (
-    <main className="space-y-6">
+    <main className="space-y-8 pb-8">
       <DashboardTitle title="Dashboard Admin" />
-
-      {/* Row 1 — 4 stat cards utama */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Pengguna"
-          value={stats?.total_users ?? 0}
-          sub={`+${stats?.new_users_week ?? 0} minggu ini`}
-          icon={Users}
-          color="bg-blue-50 text-blue-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Total Pendapatan"
-          value={formatPrice(stats?.total_revenue ?? 0)}
-          sub={`dari ${stats?.total_orders ?? 0} transaksi`}
-          icon={Banknote}
-          color="bg-purple-50 text-purple-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Total Try Out"
-          value={stats?.total_tryouts ?? 0}
-          icon={BookOpen}
-          color="bg-green-50 text-green-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Total Transaksi"
-          value={stats?.total_orders ?? 0}
-          icon={ShoppingCart}
-          color="bg-yellow-50 text-yellow-600"
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Row 2 — 4 stat cards sekunder */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard
-          label="Pendaftar Baru (30h)"
-          value={stats?.new_users_month ?? 0}
-          sub={`${stats?.new_users_week ?? 0} minggu ini`}
-          icon={UserPlus}
-          color="bg-indigo-50 text-indigo-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Total Soal"
-          value={stats?.total_questions ?? 0}
-          icon={FileQuestion}
-          color="bg-orange-50 text-orange-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Paket Aktif"
-          value={stats?.total_packages ?? 0}
-          icon={Package}
-          color="bg-pink-50 text-pink-600"
-          isLoading={isLoading}
-        />
-        <StatCard
-          label="Sesi Ujian Hari Ini"
-          value={stats?.sessions_today ?? 0}
-          icon={Activity}
-          color="bg-teal-50 text-teal-600"
-          isLoading={isLoading}
-        />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Pengguna"
+            value={stats?.total_users ?? 0}
+            sub={`+${stats?.new_users_week ?? 0} minggu ini`}
+            icon={Users}
+            iconColorClass="bg-blue-500/10 text-blue-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Total Pendapatan"
+            value={formatPrice(stats?.total_revenue ?? 0)}
+            sub={`dari ${stats?.total_orders ?? 0} transaksi`}
+            icon={Banknote}
+            iconColorClass="bg-purple-500/10 text-purple-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Total Try Out"
+            value={stats?.total_tryouts ?? 0}
+            icon={BookOpen}
+            iconColorClass="bg-green-500/10 text-green-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Total Transaksi"
+            value={stats?.total_orders ?? 0}
+            icon={ShoppingCart}
+            iconColorClass="bg-amber-500/10 text-amber-500"
+            isLoading={isLoading}
+          />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard
+            label="Pendaftar Baru (30h)"
+            value={stats?.new_users_month ?? 0}
+            sub={`${stats?.new_users_week ?? 0} minggu ini`}
+            icon={UserPlus}
+            iconColorClass="bg-indigo-500/10 text-indigo-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Total Soal"
+            value={stats?.total_questions ?? 0}
+            icon={FileQuestion}
+            iconColorClass="bg-orange-500/10 text-orange-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Paket Aktif"
+            value={stats?.total_packages ?? 0}
+            icon={Package}
+            iconColorClass="bg-pink-500/10 text-pink-500"
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Sesi Hari Ini"
+            value={stats?.sessions_today ?? 0}
+            icon={Activity}
+            iconColorClass="bg-teal-500/10 text-teal-500"
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Row 3 — Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bar Chart - Monthly Revenue */}
-        <Card className="xl:col-span-2">
+        <Card className="lg:col-span-2 border-0 shadow-sm ring-1 ring-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Pendapatan per Bulan</CardTitle>
+            <CardTitle className="text-base font-semibold tracking-tight">
+              Pendapatan per Bulan
+            </CardTitle>
+            <CardDescription>
+              Tren pendapatan bulanan dari penjualan tryout dan paket
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">
+              <div className="h-64 flex items-center justify-center text-muted-foreground/50">
                 Memuat data...
               </div>
             ) : (stats?.monthly_revenue?.length ?? 0) === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">
+              <div className="h-64 flex items-center justify-center text-muted-foreground/50">
                 Belum ada data pendapatan.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={256}>
-                <BarChart data={stats!.monthly_revenue}>
-                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <ChartContainer config={barChartConfig} className="h-64 w-full">
+                <BarChart
+                  accessibilityLayer
+                  data={stats!.monthly_revenue}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--border)"
+                  />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    tick={{
+                      fontSize: 12,
+                      fill: "var(--muted-foreground)",
+                    }}
+                  />
                   <YAxis
                     tickFormatter={(v) =>
                       new Intl.NumberFormat("id-ID", {
@@ -200,155 +256,214 @@ export default function DashboardAdminPage() {
                         maximumFractionDigits: 1,
                       }).format(v)
                     }
-                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{
+                      fontSize: 12,
+                      fill: "var(--muted-foreground)",
+                    }}
+                    width={40}
                   />
-                  <Tooltip
-                    formatter={(value) => [
-                      formatPrice(Number(value)),
-                      "Pendapatan",
-                    ]}
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value) => formatPrice(Number(value))}
+                        hideLabel={false}
+                      />
+                    }
                   />
-                  <Bar dataKey="total" fill="#004AAB" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="total"
+                    fill="var(--color-total)"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </CardContent>
         </Card>
 
         {/* Pie Chart - Order Status */}
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Status Transaksi</CardTitle>
+            <CardTitle className="text-base font-semibold tracking-tight">
+              Status Transaksi
+            </CardTitle>
+            <CardDescription>
+              Distribusi status dari semua pesanan
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">
+              <div className="h-64 flex items-center justify-center text-muted-foreground/50">
                 Memuat data...
               </div>
             ) : pieData.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-gray-400">
+              <div className="h-64 flex items-center justify-center text-muted-foreground/50">
                 Belum ada data transaksi.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={256}>
+              <ChartContainer
+                config={pieChartConfig}
+                className="h-64 w-full pb-4"
+              >
                 <PieChart>
                   <Pie
                     data={pieData}
-                    dataKey="value"
-                    nameKey="name"
+                    dataKey="count"
+                    nameKey="status"
                     cx="50%"
                     cy="50%"
+                    innerRadius={60}
                     outerRadius={80}
-                    label={({ name, percent }) =>
-                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                    strokeWidth={2}
+                    stroke="var(--background)"
+                    paddingAngle={2}
+                  ></Pie>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartLegend
+                    content={
+                      <ChartLegendContent className="flex-wrap justify-center" />
                     }
-                    labelLine={false}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Legend />
+                  />
                 </PieChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </CardContent>
         </Card>
       </div>
 
       {/* Row 4 — Pendaftaran & Top Tryout */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Line Chart - Pendaftaran 30 hari */}
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-border/50">
           <CardHeader>
-            <CardTitle className="text-base">
+            <CardTitle className="text-base font-semibold tracking-tight">
               Pendaftaran Pengguna (30 Hari Terakhir)
             </CardTitle>
+            <CardDescription>Pertumbuhan pengguna baru harian</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground/50">
                 Memuat data...
               </div>
             ) : (stats?.user_registrations?.length ?? 0) === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground/50">
                 Belum ada pendaftar baru.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={224}>
-                <LineChart data={stats!.user_registrations}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <ChartContainer
+                config={lineChartConfig}
+                className="h-[250px] w-full"
+              >
+                <LineChart
+                  accessibilityLayer
+                  data={stats!.user_registrations}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--border)"
+                  />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    tick={{
+                      fontSize: 10,
+                      fill: "var(--muted-foreground)",
+                    }}
                     tickFormatter={(v) => v.slice(5)}
                   />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    labelFormatter={(v) => `Tanggal: ${v}`}
-                    formatter={(value) => [value, "Pendaftar"]}
+                  <YAxis hide domain={["dataMin", "dataMax + 2"]} />
+                  <ChartTooltip
+                    cursor={{
+                      stroke: "var(--border)",
+                      strokeWidth: 1,
+                      strokeDasharray: "3 3",
+                    }}
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(label) => `Tanggal: ${label}`}
+                        indicator="dot"
+                      />
+                    }
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#004AAB"
+                    stroke="var(--color-count)"
                     strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
+                    dot={false}
+                    activeDot={{
+                      r: 5,
+                      fill: "var(--color-count)",
+                      stroke: "var(--background)",
+                      strokeWidth: 2,
+                    }}
                   />
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </CardContent>
         </Card>
 
-        {/* Horizontal Bar - Top Tryout */}
-        <Card>
+        {/* Top Tryouts */}
+        <Card className="border-0 shadow-sm ring-1 ring-border/5">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-yellow-500" />
+            <CardTitle className="text-base font-semibold tracking-tight">
               Try Out Terlaris
             </CardTitle>
+            <CardDescription>
+              Try out dengan jumlah peserta terbanyak
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground/50">
                 Memuat data...
               </div>
             ) : topTryoutsData.length === 0 ? (
-              <div className="h-56 flex items-center justify-center text-gray-400">
-                Belum ada data enrollment.
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground/50">
+                Belum ada data pendaftar.
               </div>
             ) : (
-              <div className="space-y-3">
-                {topTryoutsData.map((t, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span
-                      className={`text-sm font-bold w-5 shrink-0 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-orange-400" : "text-gray-300"}`}
+              <div className="flex flex-col gap-6">
+                {topTryoutsData.map((t, i) => {
+                  const percentage = Math.min(
+                    100,
+                    (t.enrolled / (topTryoutsData[0]?.enrolled || 1)) * 100,
+                  );
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-4"
                     >
-                      #{i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-medium truncate"
-                        title={t.fullName}
-                      >
-                        {t.fullName}
-                      </p>
-                      <div className="mt-1 bg-gray-100 rounded-full h-2">
-                        <div
-                          className="bg-[#004AAB] h-2 rounded-full transition-all"
-                          style={{
-                            width: `${Math.min(100, (t.enrolled / (topTryoutsData[0]?.enrolled || 1)) * 100)}%`,
-                          }}
-                        />
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <span className="text-sm text-muted-foreground font-mono w-4 text-right shrink-0">
+                          {i + 1}.
+                        </span>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <p
+                            className="text-sm font-medium leading-none truncate text-foreground"
+                            title={t.fullName}
+                          >
+                            {t.fullName}
+                          </p>
+                          <Progress value={percentage} className="h-1.5" />
+                        </div>
                       </div>
+                      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap shrink-0">
+                        {new Intl.NumberFormat("id-ID").format(t.enrolled)}{" "}
+                        peserta
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 shrink-0">
-                      {t.enrolled}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
