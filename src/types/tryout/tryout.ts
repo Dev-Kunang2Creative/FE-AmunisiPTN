@@ -36,6 +36,7 @@ export interface UserTryoutAccess {
   proof_image_urls?: string[];
   granted_at?: Date | string | null;
   user?: User;
+  tryout_status?: string;
 }
 
 export interface TryoutAttemptHistory {

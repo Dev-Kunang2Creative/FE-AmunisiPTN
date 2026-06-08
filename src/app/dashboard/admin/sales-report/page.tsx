@@ -3,11 +3,17 @@
 import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
-  useGetFeeTryoutReport,
   useGetSalesReport,
-  type FeeTryoutReportRow,
   type SalesReportRow,
 } from "@/http/sales-report/get-sales-report";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 import SmartPagination from "@/components/molecules/pagination/SmartPagination";
 import {
   exportAdminRowsToExcel,
@@ -60,6 +66,13 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/utils/format-price";
 import { formatJakartaDate } from "@/utils/date-time";
+import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
+import { DataTable } from "@/components/molecules/datatable/DataTable";
+import {
+  salesColumns,
+  type SortDirection,
+  type SalesSortKey,
+} from "@/components/atoms/datacolumn/DataSales";
 
 const MONTH_NAMES = [
   "",
@@ -81,8 +94,11 @@ const THIS_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [THIS_YEAR, THIS_YEAR - 1, THIS_YEAR - 2, THIS_YEAR - 3];
 const PER_PAGE_OPTIONS = [10, 15, 25, 50];
 const ALL_FILTER = "all";
-const salesExportColumns: AdminExportColumn<SalesReportRow>[] = [
-  { header: "Periode", accessor: (row) => monthLabel(row.month, row.year) },
+const salesExportColumns: AdminExportColumn<any>[] = [
+  {
+    header: "Periode",
+    accessor: (row) => row.period_label || monthLabel(row.month, row.year),
+  },
   { header: "Produk/TO", accessor: (row) => row.product_name },
   {
     header: "Harga",
@@ -97,40 +113,6 @@ const salesExportColumns: AdminExportColumn<SalesReportRow>[] = [
     format: (value) => formatPrice(Number(value || 0)),
   },
 ];
-const feeExportColumns: AdminExportColumn<FeeTryoutReportRow>[] = [
-  {
-    header: "Periode",
-    accessor: (row) =>
-      row.period_start
-        ? formatJakartaDate(row.period_start, {
-            month: "long",
-            year: "numeric",
-          })
-        : monthLabel(row.month, row.year),
-  },
-  { header: "Nama TO", accessor: (row) => row.tryout_name },
-  { header: "Peserta", accessor: (row) => row.participant_count },
-  {
-    header: "Total Fee",
-    accessor: (row) => row.total_fee,
-    format: (value) => formatPrice(Number(value || 0)),
-  },
-];
-
-type ActiveReport = "sales" | "fee";
-type SortDirection = "asc" | "desc";
-type SalesSortKey =
-  | "period_start"
-  | "product_name"
-  | "average_price"
-  | "total_sales"
-  | "total_item_sold"
-  | "order_count";
-type FeeSortKey =
-  | "period_start"
-  | "tryout_name"
-  | "participant_count"
-  | "total_fee";
 
 function monthLabel(month: number, year: number) {
   return `${MONTH_NAMES[month] || "-"} ${year}`;
@@ -166,60 +148,48 @@ function sortNumber(
   return direction === "asc" ? result : -result;
 }
 
-function SortButton({
-  label,
-  active,
-  direction,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  direction: SortDirection;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1 font-medium text-gray-600"
-    >
-      <span>{label}</span>
-      {active ? (
-        direction === "asc" ? (
-          <ChevronUp className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5" />
-        )
-      ) : null}
-    </button>
-  );
-}
-
 function KpiCard({
   label,
   value,
   sub,
   icon: Icon,
   tone,
+  isLoading,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon: React.ElementType;
   tone: string;
+  isLoading?: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 pt-6">
-        <div className={`rounded-xl p-3 ${tone}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="mt-1 truncate text-xl font-bold text-gray-900">
-            {value}
-          </p>
-          {sub ? <p className="mt-0.5 text-xs text-gray-400">{sub}</p> : null}
+    <Card className="group relative overflow-hidden border-0 shadow-sm ring-1 ring-border/5">
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/30 opacity-100" />
+      <CardContent className="relative">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2 min-w-0">
+            <p className="text-sm font-medium tracking-tight text-muted-foreground truncate">
+              {label}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-2xl font-semibold tracking-tight truncate">
+                {isLoading ? (
+                  <span className="text-muted-foreground/50">...</span>
+                ) : (
+                  value
+                )}
+              </h2>
+            </div>
+            {sub && !isLoading && (
+              <p className="text-xs font-medium text-muted-foreground/80 truncate">
+                {sub}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-2xl shrink-0 ${tone}`}>
+            <Icon className="w-5 h-5" strokeWidth={2} />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -262,65 +232,13 @@ function buildSalesTrend(rows: SalesReportRow[]) {
   return Array.from(map.values()).sort((a, b) => a.sort - b.sort);
 }
 
-function buildFeeTrend(rows: FeeTryoutReportRow[]) {
-  const map = new Map<
-    string,
-    {
-      label: string;
-      sort: number;
-      total_fee: number;
-      participant_count: number;
-    }
-  >();
-
-  rows.forEach((row) => {
-    const key = `${row.year}-${String(row.month).padStart(2, "0")}`;
-    const current = map.get(key) ?? {
-      label: monthLabel(row.month, row.year),
-      sort: row.year * 100 + row.month,
-      total_fee: 0,
-      participant_count: 0,
-    };
-
-    current.total_fee += Number(row.total_fee || 0);
-    current.participant_count += Number(row.participant_count || 0);
-    map.set(key, current);
-  });
-
-  return Array.from(map.values()).sort((a, b) => a.sort - b.sort);
-}
-
-function buildFeeByTryout(rows: FeeTryoutReportRow[]) {
-  const map = new Map<
-    string,
-    { tryout_name: string; total_fee: number; participant_count: number }
-  >();
-
-  rows.forEach((row) => {
-    const current = map.get(row.tryout_name) ?? {
-      tryout_name: row.tryout_name,
-      total_fee: 0,
-      participant_count: 0,
-    };
-    current.total_fee += Number(row.total_fee || 0);
-    current.participant_count += Number(row.participant_count || 0);
-    map.set(row.tryout_name, current);
-  });
-
-  return Array.from(map.values())
-    .sort((a, b) => b.total_fee - a.total_fee)
-    .slice(0, 8);
-}
-
 export default function SalesReportPage() {
   const { data: session } = useSession();
   const token = session?.access_token || "";
 
-  const [activeReport, setActiveReport] = useState<ActiveReport>("sales");
   const [year, setYear] = useState<number | undefined>(THIS_YEAR);
   const [month, setMonth] = useState<number | undefined>(undefined);
   const [salesProductFilter, setSalesProductFilter] = useState(ALL_FILTER);
-  const [feeTryoutFilter, setFeeTryoutFilter] = useState(ALL_FILTER);
   const [salesSort, setSalesSort] = useState<{
     key: SalesSortKey;
     direction: SortDirection;
@@ -328,28 +246,14 @@ export default function SalesReportPage() {
     key: "period_start",
     direction: "desc",
   });
-  const [feeSort, setFeeSort] = useState<{
-    key: FeeSortKey;
-    direction: SortDirection;
-  }>({
-    key: "period_start",
-    direction: "desc",
-  });
   const [salesPage, setSalesPage] = useState(1);
-  const [feePage, setFeePage] = useState(1);
   const [salesPerPage, setSalesPerPage] = useState(10);
-  const [feePerPage, setFeePerPage] = useState(10);
 
   const salesQuery = useGetSalesReport({ token, year, month });
-  const feeQuery = useGetFeeTryoutReport({ token, year, month });
 
   const salesRows = useMemo(
     () => salesQuery.data?.data ?? [],
     [salesQuery.data?.data],
-  );
-  const feeRows = useMemo(
-    () => feeQuery.data?.data ?? [],
-    [feeQuery.data?.data],
   );
 
   const salesProductOptions = useMemo(
@@ -359,158 +263,150 @@ export default function SalesReportPage() {
       ),
     [salesRows],
   );
-  const feeTryoutOptions = useMemo(
-    () =>
-      Array.from(new Set(feeRows.map((row) => row.tryout_name))).sort((a, b) =>
-        a.localeCompare(b, "id-ID"),
-      ),
-    [feeRows],
-  );
 
   const filteredSalesRows = useMemo(() => {
-    return salesRows
-      .filter(
-        (row) =>
-          salesProductFilter === ALL_FILTER ||
-          row.product_name === salesProductFilter,
-      )
-      .sort((a, b) => {
-        if (salesSort.key === "period_start") {
-          return sortNumber(
-            toTimestamp(a.period_start),
-            toTimestamp(b.period_start),
-            salesSort.direction,
-          );
-        }
-        if (salesSort.key === "product_name") {
-          return sortString(
-            a.product_name,
-            b.product_name,
-            salesSort.direction,
-          );
-        }
+    return salesRows.filter(
+      (row) =>
+        salesProductFilter === ALL_FILTER ||
+        row.product_name === salesProductFilter,
+    );
+  }, [salesProductFilter, salesRows]);
+
+  const tableRows = useMemo(() => {
+    const map = new Map<string, any>();
+
+    filteredSalesRows.forEach((row) => {
+      const key = `${row.product_name}-${row.average_price}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.total_item_sold += Number(row.total_item_sold || 0);
+        existing.order_count += Number(row.order_count || 0);
+        existing.total_sales += Number(row.total_sales || 0);
+        // Do not recalculate average_price, they are explicitly grouped by it
+      } else {
+        const periodLabel = month
+          ? monthLabel(month, year || THIS_YEAR)
+          : year
+            ? `Tahun ${year}`
+            : "Semua Periode";
+
+        map.set(key, {
+          ...row,
+          total_item_sold: Number(row.total_item_sold || 0),
+          order_count: Number(row.order_count || 0),
+          total_sales: Number(row.total_sales || 0),
+          period_label: periodLabel,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (salesSort.key === "period_start") {
         return sortNumber(
-          a[salesSort.key],
-          b[salesSort.key],
+          toTimestamp(a.period_start),
+          toTimestamp(b.period_start),
           salesSort.direction,
         );
-      });
-  }, [salesProductFilter, salesRows, salesSort]);
+      }
+      if (salesSort.key === "product_name") {
+        return sortString(a.product_name, b.product_name, salesSort.direction);
+      }
+      return sortNumber(
+        a[salesSort.key],
+        b[salesSort.key],
+        salesSort.direction,
+      );
+    });
+  }, [filteredSalesRows, salesSort, month, year]);
 
-  const filteredFeeRows = useMemo(() => {
-    return feeRows
-      .filter(
-        (row) =>
-          feeTryoutFilter === ALL_FILTER || row.tryout_name === feeTryoutFilter,
-      )
-      .sort((a, b) => {
-        if (feeSort.key === "period_start") {
-          return sortNumber(
-            toTimestamp(a.period_start),
-            toTimestamp(b.period_start),
-            feeSort.direction,
-          );
-        }
-        if (feeSort.key === "tryout_name") {
-          return sortString(a.tryout_name, b.tryout_name, feeSort.direction);
-        }
-        return sortNumber(a[feeSort.key], b[feeSort.key], feeSort.direction);
-      });
-  }, [feeRows, feeSort, feeTryoutFilter]);
-
-  const feeSummary = feeQuery.data?.summary ?? {
-    fee_per_participant: 6000,
-    total_fee: 0,
-    total_participants: 0,
-    tryout_count: 0,
-    average_fee_per_tryout: 0,
-  };
   const filteredSalesSummary = useMemo(() => {
-    const totalSales = filteredSalesRows.reduce(
-      (sum, row) => sum + Number(row.total_sales || 0),
-      0,
-    );
-    const totalItemSold = filteredSalesRows.reduce(
-      (sum, row) => sum + Number(row.total_item_sold || 0),
-      0,
-    );
-    const orderCount = filteredSalesRows.reduce(
-      (sum, row) => sum + Number(row.order_count || 0),
-      0,
-    );
+    let totalSalesTryout = 0;
+    let totalSalesKelas = 0;
+    let totalItemSoldTryout = 0;
+    let totalItemSoldKelas = 0;
+    let orderCountTryout = 0;
+    let orderCountKelas = 0;
+
+    filteredSalesRows.forEach((row) => {
+      const sales = Number(row.total_sales || 0);
+      const items = Number(row.total_item_sold || 0);
+      const orders = Number(row.order_count || 0);
+
+      if (row.type === "tryout") {
+        totalSalesTryout += sales;
+        totalItemSoldTryout += items;
+        orderCountTryout += orders;
+      } else if (row.type === "kelas") {
+        totalSalesKelas += sales;
+        totalItemSoldKelas += items;
+        orderCountKelas += orders;
+      } else {
+        // Fallback jika tidak ada type
+        totalSalesTryout += sales;
+        totalItemSoldTryout += items;
+        orderCountTryout += orders;
+      }
+    });
+
+    const totalSales = totalSalesTryout + totalSalesKelas;
+    const totalItemSold = totalItemSoldTryout + totalItemSoldKelas;
+    const orderCount = orderCountTryout + orderCountKelas;
+
+    const amunisiTryoutRev = Math.round(totalSalesTryout * 0.4);
+    const devTryoutRev = Math.round(totalSalesTryout * 0.6);
+
+    const amunisiKelasRev = Math.round(totalSalesKelas * 0.8);
+    const devKelasRev = Math.round(totalSalesKelas * 0.2);
 
     return {
       total_sales: totalSales,
       total_item_sold: totalItemSold,
-      amunisi_revenue: Math.round(totalSales * 0.8),
-      developer_revenue: Math.round(totalSales * 0.2),
       order_count: orderCount,
+      total_amunisi_revenue: amunisiTryoutRev + amunisiKelasRev,
+      total_developer_revenue: devTryoutRev + devKelasRev,
+      tryout: {
+        total_sales: totalSalesTryout,
+        total_item_sold: totalItemSoldTryout,
+        order_count: orderCountTryout,
+        amunisi_revenue: amunisiTryoutRev,
+        developer_revenue: devTryoutRev,
+      },
+      kelas: {
+        total_sales: totalSalesKelas,
+        total_item_sold: totalItemSoldKelas,
+        order_count: orderCountKelas,
+        amunisi_revenue: amunisiKelasRev,
+        developer_revenue: devKelasRev,
+      },
     };
   }, [filteredSalesRows]);
-  const filteredFeeSummary = useMemo(() => {
-    const totalFee = filteredFeeRows.reduce(
-      (sum, row) => sum + Number(row.total_fee || 0),
-      0,
-    );
-    const totalParticipants = filteredFeeRows.reduce(
-      (sum, row) => sum + Number(row.participant_count || 0),
-      0,
-    );
-    const tryoutCount = new Set(filteredFeeRows.map((row) => row.tryout_id))
-      .size;
-
-    return {
-      fee_per_participant: feeSummary.fee_per_participant,
-      total_fee: totalFee,
-      total_participants: totalParticipants,
-      tryout_count: tryoutCount,
-      average_fee_per_tryout:
-        tryoutCount > 0 ? Math.round(totalFee / tryoutCount) : 0,
-    };
-  }, [feeSummary.fee_per_participant, filteredFeeRows]);
-
   const salesTrend = useMemo(
     () => buildSalesTrend(filteredSalesRows),
     [filteredSalesRows],
   );
-  const feeTrend = useMemo(
-    () => buildFeeTrend(filteredFeeRows),
-    [filteredFeeRows],
-  );
-  const feeByTryout = useMemo(
-    () => buildFeeByTryout(filteredFeeRows),
-    [filteredFeeRows],
-  );
+
   const revenueSplit = [
     {
       name: "Amunisi PTN",
-      value: filteredSalesSummary.amunisi_revenue,
-      fill: "#16A34A",
+      value: filteredSalesSummary.total_amunisi_revenue,
+      fill: "#10b981",
     },
     {
       name: "Developer",
-      value: filteredSalesSummary.developer_revenue,
-      fill: "#004AAB",
+      value: filteredSalesSummary.total_developer_revenue,
+      fill: "oklch(0.4348 0.1683 258.97)",
     },
   ];
 
   const salesTotalPages = Math.max(
     1,
-    Math.ceil(filteredSalesRows.length / salesPerPage),
+    Math.ceil(tableRows.length / salesPerPage),
   );
-  const feeTotalPages = Math.max(
-    1,
-    Math.ceil(filteredFeeRows.length / feePerPage),
-  );
+
   const safeSalesPage = Math.min(salesPage, salesTotalPages);
-  const safeFeePage = Math.min(feePage, feeTotalPages);
-  const paginatedSalesRows = filteredSalesRows.slice(
+  const paginatedSalesRows = tableRows.slice(
     (safeSalesPage - 1) * salesPerPage,
     safeSalesPage * salesPerPage,
-  );
-  const paginatedFeeRows = filteredFeeRows.slice(
-    (safeFeePage - 1) * feePerPage,
-    safeFeePage * feePerPage,
   );
 
   const setSalesSortKey = (key: SalesSortKey) => {
@@ -521,104 +417,57 @@ export default function SalesReportPage() {
     }));
   };
 
-  const setFeeSortKey = (key: FeeSortKey) => {
-    setFeeSort((current) => ({
-      key,
-      direction:
-        current.key === key && current.direction === "asc" ? "desc" : "asc",
-    }));
-  };
-
   return (
-    <main className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-green-50 p-2">
-            <TrendingUp className="h-6 w-6 text-green-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Laporan Admin</h1>
-            <p className="text-sm text-gray-500">
-              Pantau penjualan paket dan fee Try Out.
-            </p>
-          </div>
-        </div>
+    <main>
+      <DashboardTitle title="Laporan Penjualan" />
 
-        <div className="flex rounded-lg border border-gray-200 bg-white p-1">
-          <button
-            type="button"
-            onClick={() => setActiveReport("sales")}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-              activeReport === "sales"
-                ? "bg-[#004AAB] text-white"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            Penjualan
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveReport("fee")}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-              activeReport === "fee"
-                ? "bg-[#004AAB] text-white"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            Fee TO
-          </button>
-        </div>
-      </div>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Filter Periode</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <Select
+                value={year ? String(year) : ALL_FILTER}
+                onValueChange={(value) => {
+                  setYear(value === ALL_FILTER ? undefined : Number(value));
+                  setSalesPage(1);
+                }}
+              >
+                <SelectTrigger className="h-10 w-full bg-white md:w-40">
+                  <SelectValue placeholder="Tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_FILTER}>Semua Tahun</SelectItem>
+                  {YEAR_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filter Periode</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <Select
-              value={year ? String(year) : ALL_FILTER}
-              onValueChange={(value) => {
-                setYear(value === ALL_FILTER ? undefined : Number(value));
-                setSalesPage(1);
-                setFeePage(1);
-              }}
-            >
-              <SelectTrigger className="h-10 w-full bg-white md:w-40">
-                <SelectValue placeholder="Tahun" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_FILTER}>Semua Tahun</SelectItem>
-                {YEAR_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={String(option)}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select
+                value={month ? String(month) : ALL_FILTER}
+                onValueChange={(value) => {
+                  setMonth(value === ALL_FILTER ? undefined : Number(value));
+                  setSalesPage(1);
+                }}
+              >
+                <SelectTrigger className="h-10 w-full bg-white md:w-44">
+                  <SelectValue placeholder="Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_FILTER}>Semua Bulan</SelectItem>
+                  {MONTH_NAMES.slice(1).map((name, index) => (
+                    <SelectItem key={name} value={String(index + 1)}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={month ? String(month) : ALL_FILTER}
-              onValueChange={(value) => {
-                setMonth(value === ALL_FILTER ? undefined : Number(value));
-                setSalesPage(1);
-                setFeePage(1);
-              }}
-            >
-              <SelectTrigger className="h-10 w-full bg-white md:w-44">
-                <SelectValue placeholder="Bulan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_FILTER}>Semua Bulan</SelectItem>
-                {MONTH_NAMES.slice(1).map((name, index) => (
-                  <SelectItem key={name} value={String(index + 1)}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {activeReport === "sales" ? (
               <Select
                 value={salesProductFilter}
                 onValueChange={(value) => {
@@ -638,39 +487,18 @@ export default function SalesReportPage() {
                   ))}
                 </SelectContent>
               </Select>
-            ) : (
-              <Select
-                value={feeTryoutFilter}
-                onValueChange={(value) => {
-                  setFeeTryoutFilter(value);
-                  setFeePage(1);
-                }}
-              >
-                <SelectTrigger className="h-10 w-full bg-white md:w-72">
-                  <SelectValue placeholder="Nama Try Out" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_FILTER}>Semua Try Out</SelectItem>
-                  {feeTryoutOptions.map((tryout) => (
-                    <SelectItem key={tryout} value={tryout}>
-                      {tryout}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-      {activeReport === "sales" ? (
         <section className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label="Total Penjualan"
               value={formatPrice(filteredSalesSummary.total_sales)}
               icon={Banknote}
-              tone="bg-green-50 text-green-600"
+              tone="bg-purple-500/10 text-purple-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
               label="Total Item Terjual"
@@ -678,22 +506,127 @@ export default function SalesReportPage() {
                 "id-ID",
               )}
               icon={Boxes}
-              tone="bg-blue-50 text-blue-600"
+              tone="bg-blue-500/10 text-blue-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
-              label="Pendapatan Amunisi PTN"
-              value={formatPrice(filteredSalesSummary.amunisi_revenue)}
-              sub="80% dari total penjualan"
+              label="Total Pendapatan Amunisi"
+              value={formatPrice(filteredSalesSummary.total_amunisi_revenue)}
               icon={CircleDollarSign}
-              tone="bg-emerald-50 text-emerald-600"
+              tone="bg-emerald-500/10 text-emerald-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
-              label="Pendapatan Developer"
-              value={formatPrice(filteredSalesSummary.developer_revenue)}
-              sub="20% dari total penjualan"
+              label="Total Pendapatan Developer"
+              value={formatPrice(filteredSalesSummary.total_developer_revenue)}
               icon={Users}
-              tone="bg-indigo-50 text-indigo-600"
+              tone="bg-primary/10 text-primary"
+              isLoading={salesQuery.isLoading}
             />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card className="border-border/60 shadow-sm overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold flex items-center justify-between text-gray-800">
+                  <span>Pendapatan Tryout</span>
+                  <span className="text-[11px] font-medium text-gray-500 bg-white border border-border/50 px-2.5 py-1 rounded-full shadow-sm">
+                    Dev 60% | Amunisi 40%
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-y-6 gap-x-6 pt-6 pb-6">
+                <div className="space-y-1.5">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Total Penjualan
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-gray-900">
+                    {formatPrice(filteredSalesSummary.tryout.total_sales)}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Item Terjual
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-gray-900">
+                    {filteredSalesSummary.tryout.total_item_sold.toLocaleString(
+                      "id-ID",
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-3 col-span-2 pt-4 border-t border-border/40">
+                  <div className="flex items-center justify-between bg-emerald-50/80 px-4 py-3.5 rounded-xl border border-emerald-100/60 shadow-sm">
+                    <p className="text-sm text-emerald-800 font-medium">
+                      Amunisi (40%)
+                    </p>
+                    <p className="text-lg font-bold text-emerald-700">
+                      {formatPrice(filteredSalesSummary.tryout.amunisi_revenue)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between bg-primary/5 px-4 py-3.5 rounded-xl border border-primary/10 shadow-sm">
+                    <p className="text-sm text-primary font-medium">
+                      Developer (60%)
+                    </p>
+                    <p className="text-lg font-bold text-primary">
+                      {formatPrice(
+                        filteredSalesSummary.tryout.developer_revenue,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 shadow-sm overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold flex items-center justify-between text-gray-800">
+                  <span>Pendapatan Kelas</span>
+                  <span className="text-[11px] font-medium text-gray-500 bg-white border border-border/50 px-2.5 py-1 rounded-full shadow-sm">
+                    Dev 20% | Amunisi 80%
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-y-6 gap-x-6 pt-6 pb-6">
+                <div className="space-y-1.5">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Total Penjualan
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-gray-900">
+                    {formatPrice(filteredSalesSummary.kelas.total_sales)}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Item Terjual
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-gray-900">
+                    {filteredSalesSummary.kelas.total_item_sold.toLocaleString(
+                      "id-ID",
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-3 col-span-2 pt-4 border-t border-border/40">
+                  <div className="flex items-center justify-between bg-emerald-50/80 px-4 py-3.5 rounded-xl border border-emerald-100/60 shadow-sm">
+                    <p className="text-sm text-emerald-800 font-medium">
+                      Amunisi (80%)
+                    </p>
+                    <p className="text-lg font-bold text-emerald-700">
+                      {formatPrice(filteredSalesSummary.kelas.amunisi_revenue)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between bg-primary/5 px-4 py-3.5 rounded-xl border border-primary/10 shadow-sm">
+                    <p className="text-sm text-primary font-medium">
+                      Developer (20%)
+                    </p>
+                    <p className="text-lg font-bold text-primary">
+                      {formatPrice(
+                        filteredSalesSummary.kelas.developer_revenue,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -709,15 +642,40 @@ export default function SalesReportPage() {
                 ) : salesTrend.length === 0 ? (
                   <StateBox message="Belum ada data penjualan untuk periode ini." />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ChartContainer
+                    config={{
+                      total_sales: {
+                        label: "Penjualan",
+                        color: "oklch(0.4348 0.1683 258.97)",
+                      },
+                      total_item_sold: {
+                        label: "Item Terjual",
+                        color: "oklch(0.627 0.194 149.214)",
+                      },
+                    }}
+                    className="h-[280px] w-full"
+                  >
                     <LineChart
                       data={salesTrend}
-                      margin={{ left: 0, right: 12, top: 8, bottom: 0 }}
+                      margin={{ left: 0, right: 12, top: 24, bottom: 0 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        stroke="#e5e7eb"
+                      />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={12}
+                        tick={{ fontSize: 12 }}
+                      />
                       <YAxis
                         yAxisId="sales"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
                         tickFormatter={(value) =>
                           compactCurrency(Number(value))
                         }
@@ -726,34 +684,47 @@ export default function SalesReportPage() {
                       <YAxis
                         yAxisId="items"
                         orientation="right"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
                         allowDecimals={false}
                         tick={{ fontSize: 11 }}
                       />
-                      <Tooltip
-                        formatter={(value, name) =>
-                          name === "Penjualan"
-                            ? formatPrice(Number(value))
-                            : Number(value).toLocaleString("id-ID")
+                      <ChartTooltip
+                        cursor={{ stroke: "#e5e7eb", strokeWidth: 2 }}
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value, name) =>
+                              name === "total_sales" || name === "Penjualan"
+                                ? formatPrice(Number(value))
+                                : Number(value).toLocaleString("id-ID")
+                            }
+                          />
                         }
                       />
+                      <ChartLegend content={<ChartLegendContent />} />
                       <Line
                         yAxisId="sales"
                         type="monotone"
                         dataKey="total_sales"
                         name="Penjualan"
-                        stroke="#004AAB"
-                        strokeWidth={2}
+                        stroke="var(--color-total_sales)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
                       />
                       <Line
                         yAxisId="items"
                         type="monotone"
                         dataKey="total_item_sold"
                         name="Item Terjual"
-                        stroke="#16A34A"
-                        strokeWidth={2}
+                        stroke="var(--color-total_item_sold)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ChartContainer>
                 )}
               </CardContent>
             </Card>
@@ -770,7 +741,19 @@ export default function SalesReportPage() {
                 ) : filteredSalesSummary.total_sales <= 0 ? (
                   <StateBox message="Belum ada pendapatan untuk periode ini." />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ChartContainer
+                    config={{
+                      "Amunisi PTN": {
+                        label: "Amunisi",
+                        color: "oklch(0.627 0.194 149.214)",
+                      },
+                      Developer: {
+                        label: "Developer",
+                        color: "oklch(0.4348 0.1683 258.97)",
+                      },
+                    }}
+                    className="h-[280px] w-full"
+                  >
                     <PieChart>
                       <Pie
                         data={revenueSplit}
@@ -778,20 +761,26 @@ export default function SalesReportPage() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={90}
-                        label={({ name, percent }) =>
-                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                        }
+                        innerRadius={65}
+                        outerRadius={95}
+                        stroke="none"
                       >
                         {revenueSplit.map((entry) => (
                           <Cell key={entry.name} fill={entry.fill} />
                         ))}
                       </Pie>
-                      <Tooltip
-                        formatter={(value) => formatPrice(Number(value))}
+                      <ChartTooltip
+                        cursor={{ fill: "transparent" }}
+                        content={
+                          <ChartTooltipContent
+                            hideLabel
+                            formatter={(value) => formatPrice(Number(value))}
+                          />
+                        }
                       />
+                      <ChartLegend content={<ChartLegendContent />} />
                     </PieChart>
-                  </ResponsiveContainer>
+                  </ChartContainer>
                 )}
               </CardContent>
             </Card>
@@ -806,10 +795,9 @@ export default function SalesReportPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-green-200 text-green-700 hover:bg-green-50"
                     onClick={() =>
                       exportAdminRowsToExcel({
-                        rows: filteredSalesRows,
+                        rows: tableRows,
                         columns: salesExportColumns,
                         title: "laporan-penjualan",
                       })
@@ -822,10 +810,9 @@ export default function SalesReportPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
                     onClick={() =>
                       exportAdminRowsToPdf({
-                        rows: filteredSalesRows,
+                        rows: tableRows,
                         columns: salesExportColumns,
                         title: "laporan-penjualan",
                         filterSummary: `Tahun: ${year ?? "Semua"}; Bulan: ${month ? MONTH_NAMES[month] : "Semua"}; Produk: ${salesProductFilter === ALL_FILTER ? "Semua" : salesProductFilter}`,
@@ -847,118 +834,42 @@ export default function SalesReportPage() {
                 <StateBox message="Tidak ada data penjualan yang cocok dengan filter." />
               ) : (
                 <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-12 px-4">No</TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Tanggal"
-                            active={salesSort.key === "period_start"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("period_start")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Produk/TO"
-                            active={salesSort.key === "product_name"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("product_name")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Harga"
-                            active={salesSort.key === "average_price"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("average_price")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Item Terjual"
-                            active={salesSort.key === "total_item_sold"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("total_item_sold")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Order"
-                            active={salesSort.key === "order_count"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("order_count")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Total"
-                            active={salesSort.key === "total_sales"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("total_sales")}
-                          />
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedSalesRows.map((row, index) => (
-                        <TableRow
-                          key={`${row.product_name}-${row.year}-${row.month}`}
-                        >
-                          <TableCell className="px-4 text-gray-400">
-                            {(safeSalesPage - 1) * salesPerPage + index + 1}
+                  <DataTable
+                    columns={salesColumns({
+                      sortKey: salesSort.key,
+                      sortDirection: salesSort.direction,
+                      onSort: setSalesSortKey,
+                    })}
+                    data={paginatedSalesRows}
+                    isLoading={salesQuery.isLoading}
+                    disablePagination={true}
+                    tableFooter={
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={4} className="px-4 font-bold">
+                            Grand Total
                           </TableCell>
-                          <TableCell className="px-4 text-gray-600">
-                            {monthLabel(row.month, row.year)}
-                          </TableCell>
-                          <TableCell className="px-4 font-medium text-gray-800">
-                            {row.product_name}
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {formatPrice(row.average_price)}
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {Number(row.total_item_sold || 0).toLocaleString(
+                          <TableCell className="px-4 text-right font-bold">
+                            {filteredSalesSummary.total_item_sold.toLocaleString(
                               "id-ID",
                             )}
                           </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {Number(row.order_count || 0).toLocaleString(
+                          <TableCell className="px-4 text-right font-bold">
+                            {filteredSalesSummary.order_count.toLocaleString(
                               "id-ID",
                             )}
                           </TableCell>
-                          <TableCell className="px-4 text-right font-semibold text-gray-900">
-                            {formatPrice(row.total_sales)}
+                          <TableCell className="px-4 text-right font-bold text-green-600">
+                            {formatPrice(filteredSalesSummary.total_sales)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={4} className="px-4 font-bold">
-                          Grand Total
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {filteredSalesSummary.total_item_sold.toLocaleString(
-                            "id-ID",
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {filteredSalesSummary.order_count.toLocaleString(
-                            "id-ID",
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold text-green-600">
-                          {formatPrice(filteredSalesSummary.total_sales)}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                      </TableFooter>
+                    }
+                  />
 
                   <SmartPagination
                     page={safeSalesPage}
-                    totalItems={filteredSalesRows.length}
+                    totalItems={tableRows.length}
                     perPage={salesPerPage}
                     perPageOptions={PER_PAGE_OPTIONS}
                     itemLabel="baris"
@@ -973,299 +884,7 @@ export default function SalesReportPage() {
             </CardContent>
           </Card>
         </section>
-      ) : (
-        <section className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label="Total Fee"
-              value={formatPrice(filteredFeeSummary.total_fee)}
-              sub={`${formatPrice(filteredFeeSummary.fee_per_participant)} x peserta`}
-              icon={Banknote}
-              tone="bg-green-50 text-green-600"
-            />
-            <KpiCard
-              label="Total Peserta"
-              value={filteredFeeSummary.total_participants.toLocaleString(
-                "id-ID",
-              )}
-              icon={Users}
-              tone="bg-blue-50 text-blue-600"
-            />
-            <KpiCard
-              label="Jumlah TO"
-              value={filteredFeeSummary.tryout_count.toLocaleString("id-ID")}
-              icon={Boxes}
-              tone="bg-indigo-50 text-indigo-600"
-            />
-            <KpiCard
-              label="Rata-rata Fee per TO"
-              value={formatPrice(filteredFeeSummary.average_fee_per_tryout)}
-              icon={CircleDollarSign}
-              tone="bg-amber-50 text-amber-600"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Tren Fee per Waktu</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {feeQuery.isLoading ? (
-                  <StateBox message="Memuat chart fee..." />
-                ) : feeTrend.length === 0 ? (
-                  <StateBox message="Belum ada data fee untuk periode ini." />
-                ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <LineChart
-                      data={feeTrend}
-                      margin={{ left: 0, right: 12, top: 8, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                      <YAxis
-                        tickFormatter={(value) =>
-                          compactCurrency(Number(value))
-                        }
-                        tick={{ fontSize: 11 }}
-                      />
-                      <Tooltip
-                        formatter={(value, name) =>
-                          name === "Fee"
-                            ? formatPrice(Number(value))
-                            : Number(value).toLocaleString("id-ID")
-                        }
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="total_fee"
-                        name="Fee"
-                        stroke="#004AAB"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="participant_count"
-                        name="Peserta"
-                        stroke="#16A34A"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Fee per TO</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {feeQuery.isLoading ? (
-                  <StateBox message="Memuat chart fee per TO..." />
-                ) : feeByTryout.length === 0 ? (
-                  <StateBox message="Belum ada data fee per TO." />
-                ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart
-                      data={feeByTryout}
-                      layout="vertical"
-                      margin={{ left: 16, right: 16, top: 8, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis
-                        type="number"
-                        tickFormatter={(value) =>
-                          compactCurrency(Number(value))
-                        }
-                        tick={{ fontSize: 11 }}
-                      />
-                      <YAxis
-                        dataKey="tryout_name"
-                        type="category"
-                        width={120}
-                        tick={{ fontSize: 11 }}
-                      />
-                      <Tooltip
-                        formatter={(value) => formatPrice(Number(value))}
-                      />
-                      <Bar
-                        dataKey="total_fee"
-                        name="Total Fee"
-                        fill="#004AAB"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="text-base">Tabel Fee TO</CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-green-200 text-green-700 hover:bg-green-50"
-                    onClick={() =>
-                      exportAdminRowsToExcel({
-                        rows: filteredFeeRows,
-                        columns: feeExportColumns,
-                        title: "laporan-fee-tryout",
-                      })
-                    }
-                  >
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Excel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    onClick={() =>
-                      exportAdminRowsToPdf({
-                        rows: filteredFeeRows,
-                        columns: feeExportColumns,
-                        title: "laporan-fee-tryout",
-                        filterSummary: `Tahun: ${year ?? "Semua"}; Bulan: ${month ? MONTH_NAMES[month] : "Semua"}; Try Out: ${feeTryoutFilter === ALL_FILTER ? "Semua" : feeTryoutFilter}`,
-                      })
-                    }
-                  >
-                    <FileText className="h-4 w-4" />
-                    PDF
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {feeQuery.isError ? (
-                <StateBox message="Gagal memuat laporan fee TO. Coba refresh halaman." />
-              ) : feeQuery.isLoading ? (
-                <StateBox message="Memuat data fee TO..." />
-              ) : filteredFeeRows.length === 0 ? (
-                <StateBox message="Tidak ada data fee TO yang cocok dengan filter." />
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-12 px-4">No</TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Tanggal"
-                            active={feeSort.key === "period_start"}
-                            direction={feeSort.direction}
-                            onClick={() => setFeeSortKey("period_start")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Nama TO"
-                            active={feeSort.key === "tryout_name"}
-                            direction={feeSort.direction}
-                            onClick={() => setFeeSortKey("tryout_name")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Peserta"
-                            active={feeSort.key === "participant_count"}
-                            direction={feeSort.direction}
-                            onClick={() => setFeeSortKey("participant_count")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          Fee per Peserta
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Total Fee"
-                            active={feeSort.key === "total_fee"}
-                            direction={feeSort.direction}
-                            onClick={() => setFeeSortKey("total_fee")}
-                          />
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedFeeRows.map((row, index) => (
-                        <TableRow
-                          key={`${row.tryout_id}-${row.year}-${row.month}`}
-                        >
-                          <TableCell className="px-4 text-gray-400">
-                            {(safeFeePage - 1) * feePerPage + index + 1}
-                          </TableCell>
-                          <TableCell className="px-4 text-gray-600">
-                            {row.period_start
-                              ? formatJakartaDate(row.period_start, {
-                                  month: "long",
-                                  year: "numeric",
-                                })
-                              : monthLabel(row.month, row.year)}
-                          </TableCell>
-                          <TableCell className="px-4 font-medium text-gray-800">
-                            {row.tryout_name}
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {Number(row.participant_count || 0).toLocaleString(
-                              "id-ID",
-                            )}
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {formatPrice(
-                              filteredFeeSummary.fee_per_participant,
-                            )}
-                          </TableCell>
-                          <TableCell className="px-4 text-right font-semibold text-gray-900">
-                            {formatPrice(row.total_fee)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={3} className="px-4 font-bold">
-                          Grand Total
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {filteredFeeSummary.total_participants.toLocaleString(
-                            "id-ID",
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {formatPrice(filteredFeeSummary.fee_per_participant)}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold text-green-600">
-                          {formatPrice(filteredFeeSummary.total_fee)}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
-
-                  <SmartPagination
-                    page={safeFeePage}
-                    totalItems={filteredFeeRows.length}
-                    perPage={feePerPage}
-                    perPageOptions={PER_PAGE_OPTIONS}
-                    itemLabel="baris"
-                    onPageChange={setFeePage}
-                    onPerPageChange={(value) => {
-                      setFeePerPage(value);
-                      setFeePage(1);
-                    }}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-      )}
+      </div>
     </main>
   );
 }

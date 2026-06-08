@@ -3,6 +3,7 @@ import type { AxiosError } from "axios";
 import { api } from "@/lib/axios";
 
 export interface SalesReportRow {
+  type: "tryout" | "kelas";
   product_name: string;
   year: number;
   month: number;
@@ -13,12 +14,22 @@ export interface SalesReportRow {
   total_sales: number;
 }
 
+export interface SalesReportSummaryDetail {
+  total_sales: number;
+  total_item_sold: number;
+  order_count: number;
+  amunisi_revenue: number;
+  developer_revenue: number;
+}
+
 export interface SalesReportSummary {
   total_sales: number;
   total_item_sold: number;
-  amunisi_revenue: number;
-  developer_revenue: number;
   order_count: number;
+  total_amunisi_revenue: number;
+  total_developer_revenue: number;
+  tryout: SalesReportSummaryDetail;
+  kelas: SalesReportSummaryDetail;
 }
 
 export interface SalesReportResponse {
@@ -97,10 +108,13 @@ export const GetFeeTryoutReportHandler = async ({
   if (year) params.year = year;
   if (month) params.month = month;
 
-  const { data } = await api.get<FeeTryoutReportResponse>("/admin/fee-to-report", {
-    headers: { Authorization: `Bearer ${token}` },
-    params,
-  });
+  const { data } = await api.get<FeeTryoutReportResponse>(
+    "/admin/fee-to-report",
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params,
+    },
+  );
   return data;
 };
 

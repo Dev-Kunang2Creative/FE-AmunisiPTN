@@ -40,6 +40,7 @@ interface DataTableProps<TData, TValue> {
   errorMessage?: string;
   defaultPageSize?: number;
   disablePagination?: boolean;
+  tableFooter?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +51,7 @@ export function DataTable<TData, TValue>({
   errorMessage = "Gagal memuat data.",
   defaultPageSize = 10,
   disablePagination = false,
+  tableFooter,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pageSize, setPageSize] = React.useState(defaultPageSize);
@@ -66,13 +68,17 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     state: {
       sorting,
-      pagination: { pageIndex: disablePagination ? 0 : pageIndex, pageSize: effectivePageSize },
+      pagination: {
+        pageIndex: disablePagination ? 0 : pageIndex,
+        pageSize: effectivePageSize,
+      },
     },
     onPaginationChange: (updater) => {
       if (disablePagination) return;
-      const next = typeof updater === "function"
-        ? updater({ pageIndex, pageSize })
-        : updater;
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
       setPageIndex(next.pageIndex);
       setPageSize(next.pageSize);
     },
@@ -100,7 +106,10 @@ export function DataTable<TData, TValue>({
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -118,15 +127,17 @@ export function DataTable<TData, TValue>({
                 </TableCell>
               </TableRow>
             ) : isLoading ? (
-              Array.from({ length: pageSize > 5 ? 5 : pageSize }).map((_, rowIndex) => (
-                <TableRow key={`skeleton-${rowIndex}`}>
-                  {columns.map((_, colIndex) => (
-                    <TableCell key={`skeleton-${rowIndex}-${colIndex}`}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              Array.from({ length: pageSize > 5 ? 5 : pageSize }).map(
+                (_, rowIndex) => (
+                  <TableRow key={`skeleton-${rowIndex}`}>
+                    {columns.map((_, colIndex) => (
+                      <TableCell key={`skeleton-${rowIndex}-${colIndex}`}>
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ),
+              )
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row, index) => (
                 <TableRow
@@ -138,7 +149,10 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -154,6 +168,7 @@ export function DataTable<TData, TValue>({
               </TableRow>
             )}
           </TableBody>
+          {tableFooter}
         </Table>
       </div>
 
@@ -181,7 +196,11 @@ export function DataTable<TData, TValue>({
                 </SelectTrigger>
                 <SelectContent>
                   {PAGE_SIZE_OPTIONS.map((size) => (
-                    <SelectItem key={size} value={String(size)} className="text-xs">
+                    <SelectItem
+                      key={size}
+                      value={String(size)}
+                      className="text-xs"
+                    >
                       {size}
                     </SelectItem>
                   ))}
@@ -208,7 +227,9 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
+                onClick={() =>
+                  setPageIndex((p) => Math.min(pageCount - 1, p + 1))
+                }
                 disabled={pageIndex >= pageCount - 1}
               >
                 <ChevronRight className="w-4 h-4" />
