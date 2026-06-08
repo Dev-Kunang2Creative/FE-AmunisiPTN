@@ -67,6 +67,12 @@ import {
 import { formatPrice } from "@/utils/format-price";
 import { formatJakartaDate } from "@/utils/date-time";
 import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
+import { DataTable } from "@/components/molecules/datatable/DataTable";
+import {
+  salesColumns,
+  type SortDirection,
+  type SalesSortKey,
+} from "@/components/atoms/datacolumn/DataSales";
 
 const MONTH_NAMES = [
   "",
@@ -107,14 +113,6 @@ const salesExportColumns: AdminExportColumn<any>[] = [
     format: (value) => formatPrice(Number(value || 0)),
   },
 ];
-type SortDirection = "asc" | "desc";
-type SalesSortKey =
-  | "period_start"
-  | "product_name"
-  | "average_price"
-  | "total_sales"
-  | "total_item_sold"
-  | "order_count";
 
 function monthLabel(month: number, year: number) {
   return `${MONTH_NAMES[month] || "-"} ${year}`;
@@ -150,60 +148,48 @@ function sortNumber(
   return direction === "asc" ? result : -result;
 }
 
-function SortButton({
-  label,
-  active,
-  direction,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  direction: SortDirection;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1 font-medium text-gray-600"
-    >
-      <span>{label}</span>
-      {active ? (
-        direction === "asc" ? (
-          <ChevronUp className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5" />
-        )
-      ) : null}
-    </button>
-  );
-}
-
 function KpiCard({
   label,
   value,
   sub,
   icon: Icon,
   tone,
+  isLoading,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon: React.ElementType;
   tone: string;
+  isLoading?: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4">
-        <div className={`rounded-xl p-3 ${tone}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="mt-1 truncate text-xl font-bold text-gray-900">
-            {value}
-          </p>
-          {sub ? <p className="mt-0.5 text-xs text-gray-400">{sub}</p> : null}
+    <Card className="group relative overflow-hidden border-0 shadow-sm ring-1 ring-border/5">
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/30 opacity-100" />
+      <CardContent className="relative">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2 min-w-0">
+            <p className="text-sm font-medium tracking-tight text-muted-foreground truncate">
+              {label}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-2xl font-semibold tracking-tight truncate">
+                {isLoading ? (
+                  <span className="text-muted-foreground/50">...</span>
+                ) : (
+                  value
+                )}
+              </h2>
+            </div>
+            {sub && !isLoading && (
+              <p className="text-xs font-medium text-muted-foreground/80 truncate">
+                {sub}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-2xl shrink-0 ${tone}`}>
+            <Icon className="w-5 h-5" strokeWidth={2} />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -511,7 +497,8 @@ export default function SalesReportPage() {
               label="Total Penjualan"
               value={formatPrice(filteredSalesSummary.total_sales)}
               icon={Banknote}
-              tone="bg-gray-100 text-gray-700"
+              tone="bg-purple-500/10 text-purple-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
               label="Total Item Terjual"
@@ -519,19 +506,22 @@ export default function SalesReportPage() {
                 "id-ID",
               )}
               icon={Boxes}
-              tone="bg-gray-100 text-gray-700"
+              tone="bg-blue-500/10 text-blue-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
               label="Total Pendapatan Amunisi"
               value={formatPrice(filteredSalesSummary.total_amunisi_revenue)}
               icon={CircleDollarSign}
-              tone="bg-emerald-50 text-emerald-600"
+              tone="bg-emerald-500/10 text-emerald-500"
+              isLoading={salesQuery.isLoading}
             />
             <KpiCard
               label="Total Pendapatan Developer"
               value={formatPrice(filteredSalesSummary.total_developer_revenue)}
               icon={Users}
               tone="bg-primary/10 text-primary"
+              isLoading={salesQuery.isLoading}
             />
           </div>
 
@@ -805,7 +795,6 @@ export default function SalesReportPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-green-200 text-green-700 hover:bg-green-50"
                     onClick={() =>
                       exportAdminRowsToExcel({
                         rows: tableRows,
@@ -821,7 +810,6 @@ export default function SalesReportPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
                     onClick={() =>
                       exportAdminRowsToPdf({
                         rows: tableRows,
@@ -846,127 +834,38 @@ export default function SalesReportPage() {
                 <StateBox message="Tidak ada data penjualan yang cocok dengan filter." />
               ) : (
                 <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-12 px-4">No</TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Tanggal"
-                            active={salesSort.key === "period_start"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("period_start")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4">
-                          <SortButton
-                            label="Produk/TO"
-                            active={salesSort.key === "product_name"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("product_name")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Harga"
-                            active={salesSort.key === "average_price"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("average_price")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Item Terjual"
-                            active={salesSort.key === "total_item_sold"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("total_item_sold")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Order"
-                            active={salesSort.key === "order_count"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("order_count")}
-                          />
-                        </TableHead>
-                        <TableHead className="px-4 text-right">
-                          <SortButton
-                            label="Total"
-                            active={salesSort.key === "total_sales"}
-                            direction={salesSort.direction}
-                            onClick={() => setSalesSortKey("total_sales")}
-                          />
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedSalesRows.map((row, index) => (
-                        <TableRow
-                          key={`${row.product_name}-${row.average_price}`}
-                        >
-                          <TableCell className="px-4 text-gray-400">
-                            {(safeSalesPage - 1) * salesPerPage + index + 1}
+                  <DataTable
+                    columns={salesColumns({
+                      sortKey: salesSort.key,
+                      sortDirection: salesSort.direction,
+                      onSort: setSalesSortKey,
+                    })}
+                    data={paginatedSalesRows}
+                    isLoading={salesQuery.isLoading}
+                    disablePagination={true}
+                    tableFooter={
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={4} className="px-4 font-bold">
+                            Grand Total
                           </TableCell>
-                          <TableCell className="px-4 text-gray-600">
-                            {row.period_label}
-                          </TableCell>
-                          <TableCell className="px-4 font-medium text-gray-800">
-                            <div className="flex flex-col gap-1 items-start">
-                              <span>{row.product_name}</span>
-                              {row.type && (
-                                <span
-                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                    row.type === "tryout"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-orange-100 text-orange-700"
-                                  }`}
-                                >
-                                  {row.type === "tryout" ? "TRYOUT" : "KELAS"}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {formatPrice(row.average_price)}
-                          </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {Number(row.total_item_sold || 0).toLocaleString(
+                          <TableCell className="px-4 text-right font-bold">
+                            {filteredSalesSummary.total_item_sold.toLocaleString(
                               "id-ID",
                             )}
                           </TableCell>
-                          <TableCell className="px-4 text-right text-gray-700">
-                            {Number(row.order_count || 0).toLocaleString(
+                          <TableCell className="px-4 text-right font-bold">
+                            {filteredSalesSummary.order_count.toLocaleString(
                               "id-ID",
                             )}
                           </TableCell>
-                          <TableCell className="px-4 text-right font-semibold text-gray-900">
-                            {formatPrice(row.total_sales)}
+                          <TableCell className="px-4 text-right font-bold text-green-600">
+                            {formatPrice(filteredSalesSummary.total_sales)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={4} className="px-4 font-bold">
-                          Grand Total
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {filteredSalesSummary.total_item_sold.toLocaleString(
-                            "id-ID",
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold">
-                          {filteredSalesSummary.order_count.toLocaleString(
-                            "id-ID",
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 text-right font-bold text-green-600">
-                          {formatPrice(filteredSalesSummary.total_sales)}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                      </TableFooter>
+                    }
+                  />
 
                   <SmartPagination
                     page={safeSalesPage}
