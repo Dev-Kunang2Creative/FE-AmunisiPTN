@@ -4,6 +4,7 @@ import { useState, useEffect, use, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import ExamTimer from "@/components/molecules/exam/ExamTimer";
 import ExamSidebar from "@/components/molecules/exam/ExamSidebar";
 import QuestionView from "@/components/molecules/exam/QuestionView";
@@ -15,6 +16,7 @@ import { useFinishSubtest } from "@/http/tryout/finish-subtest";
 import { useStartSubtest } from "@/http/tryout/start-subtest";
 import { useGetExamQuestions } from "@/http/tryout/get-exam-questions";
 import { useGetUserTryoutDetail } from "@/http/tryout/get-user-tryout-detail";
+import { getErrorMessage } from "@/utils/get-error-message";
 import type { ExamQuestion } from "@/types/exam/exam";
 import type { SubtestByTryout } from "@/types/subtest/subtest";
 
@@ -56,19 +58,24 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     if (!tryoutDetail?.data?.tryout_subtests) return [];
 
     return [...tryoutDetail.data.tryout_subtests]
-        .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
-        .map((ts: SubtestByTryout) => {
-          const rawName = ts.subtest.name;
-          const displayName = rawName.includes("_") ? rawName.split("_").slice(1).join("_") : rawName;
-          
-          return {
-            id: ts.id,
-            name: displayName,
-            category: ts.subtest.category === "TPS" ? "Tes Potensi Skolastik" : "Tes Literasi",
-            duration: ts.duration_minutes,
-            questionCount: ts.subtest.max_questions,
-          };
-        });
+      .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
+      .map((ts: SubtestByTryout) => {
+        const rawName = ts.subtest.name;
+        const displayName = rawName.includes("_")
+          ? rawName.split("_").slice(1).join("_")
+          : rawName;
+
+        return {
+          id: ts.id,
+          name: displayName,
+          category:
+            ts.subtest.category === "TPS"
+              ? "Tes Potensi Skolastik"
+              : "Tes Literasi",
+          duration: ts.duration_minutes,
+          questionCount: ts.subtest.max_questions,
+        };
+      });
   }, [tryoutDetail]);
 
   const currentSubtest = subtests[currentSubtestIndex];
@@ -116,75 +123,86 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
       {
         onSuccess: () => {
           // Fetch exam questions
-          refetchExam().then((result) => {
-            if (result.data?.data?.questions) {
-              setQuestions(result.data.data.questions);
-              // Pre-fill answers from BE (my_answer field)
-              const preAnswers: Record<string, string | null> = {};
-              result.data.data.questions.forEach((q) => {
-                if (q.my_answer) preAnswers[q.id] = q.my_answer;
-              });
-              setAnswers(preAnswers);
+          refetchExam()
+            .then((result) => {
+              if (result.data?.data?.questions) {
+                setQuestions(result.data.data.questions);
+                // Pre-fill answers from BE (my_answer field)
+                const preAnswers: Record<string, string | null> = {};
+                result.data.data.questions.forEach((q) => {
+                  if (q.my_answer) preAnswers[q.id] = q.my_answer;
+                });
+                setAnswers(preAnswers);
 
-              // Use timer from BE data if available
-              if (result.data.data.timer) {
-                setTimerSeconds(result.data.data.timer.remaining_seconds);
+                // Use timer from BE data if available
+                if (result.data.data.timer) {
+                  setTimerSeconds(result.data.data.timer.remaining_seconds);
+                }
               }
-            }
-            setIsLoading(false);
-          }).catch(() => {
-            setQuestions([]);
-            setIsLoading(false);
-          });
+              setIsLoading(false);
+            })
+            .catch(() => {
+              setQuestions([]);
+              setIsLoading(false);
+            });
         },
         onError: () => {
           // Fallback: still try to fetch questions (maybe subtest was already started)
-          refetchExam().then((result) => {
-            if (result.data?.data?.questions) {
-              setQuestions(result.data.data.questions);
-              const preAnswers: Record<string, string | null> = {};
-              result.data.data.questions.forEach((q) => {
-                if (q.my_answer) preAnswers[q.id] = q.my_answer;
-              });
-              setAnswers(preAnswers);
-              if (result.data.data.timer) {
-                setTimerSeconds(result.data.data.timer.remaining_seconds);
+          refetchExam()
+            .then((result) => {
+              if (result.data?.data?.questions) {
+                setQuestions(result.data.data.questions);
+                const preAnswers: Record<string, string | null> = {};
+                result.data.data.questions.forEach((q) => {
+                  if (q.my_answer) preAnswers[q.id] = q.my_answer;
+                });
+                setAnswers(preAnswers);
+                if (result.data.data.timer) {
+                  setTimerSeconds(result.data.data.timer.remaining_seconds);
+                }
+              } else {
+                setQuestions([]);
+                setTimerSeconds((currentSubtest?.duration || 30) * 60);
               }
-            } else {
+              setIsLoading(false);
+            })
+            .catch(() => {
               setQuestions([]);
               setTimerSeconds((currentSubtest?.duration || 30) * 60);
-            }
-            setIsLoading(false);
-          }).catch(() => {
-            setQuestions([]);
-            setTimerSeconds((currentSubtest?.duration || 30) * 60);
-            setIsLoading(false);
-          });
+              setIsLoading(false);
+            });
         },
-      }
+      },
     );
   }, [currentSubtest, refetchExam, startSubtest, tryoutId]);
 
   // --- Mutations ---
   const submitAnswerMutation = useSubmitAnswer({
     token,
-    options: { onError: (error: unknown) => console.error("Failed to submit answer:", error) },
+    options: {
+      onError: (error: unknown) =>
+        console.error("Failed to submit answer:", error),
+    },
   });
 
   const finishSubtestMutation = useFinishSubtest({
     token,
-    options: { onSuccess: () => navigateAfterSubtest() },
   });
 
   // --- Derived state ---
   const currentQuestion = questions[currentQuestionIndex];
   const answeredQuestions = new Set(
-    Object.entries(answers).filter(([, v]) => v !== null).map(([k]) => k)
+    Object.entries(answers)
+      .filter(([, v]) => v !== null)
+      .map(([k]) => k),
   );
   const unansweredCount = questions.length - answeredQuestions.size;
 
   // --- Handlers ---
-  const handleSelectAnswer = (answer: string | null, questionId = currentQuestion?.id) => {
+  const handleSelectAnswer = (
+    answer: string | null,
+    questionId = currentQuestion?.id,
+  ) => {
     if (!currentQuestion || !questionId) return;
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
 
@@ -202,7 +220,9 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const navigateAfterSubtest = () => {
     const nextIndex = currentSubtestIndex + 1;
     if (nextIndex < totalSubtests) {
-      router.push(`/dashboard/try-out/${tryoutId}/subtest-complete?current=${currentSubtestIndex}&next=${nextIndex}&total=${totalSubtests}`);
+      router.push(
+        `/dashboard/try-out/${tryoutId}/subtest-complete?current=${currentSubtestIndex}&next=${nextIndex}&total=${totalSubtests}`,
+      );
     } else {
       router.push(`/dashboard/try-out/${tryoutId}/tryout-complete`);
     }
@@ -212,10 +232,22 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     setShowTimeUpDialog(true);
   };
 
-  const confirmTimeUp = () => {
+  const confirmTimeUp = async () => {
     setShowTimeUpDialog(false);
     if (currentSubtest) {
-      finishSubtestMutation.mutate({ tryoutId, subtestId: currentSubtest.id });
+      const toastId = toast.loading("Menyimpan jawaban Anda...");
+      try {
+        await finishSubtestMutation.mutateAsync({
+          tryoutId,
+          subtestId: currentSubtest.id,
+        });
+        toast.success("Berhasil menyimpan jawaban!", { id: toastId });
+        navigateAfterSubtest();
+      } catch (err) {
+        toast.error(getErrorMessage(err, "Gagal menyimpan jawaban"), {
+          id: toastId,
+        });
+      }
     } else {
       navigateAfterSubtest();
     }
@@ -225,10 +257,22 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     setShowFinishDialog(true);
   };
 
-  const confirmFinishSubtest = () => {
+  const confirmFinishSubtest = async () => {
     setShowFinishDialog(false);
     if (currentSubtest) {
-      finishSubtestMutation.mutate({ tryoutId, subtestId: currentSubtest.id });
+      const toastId = toast.loading("Menyimpan jawaban Anda...");
+      try {
+        await finishSubtestMutation.mutateAsync({
+          tryoutId,
+          subtestId: currentSubtest.id,
+        });
+        toast.success("Berhasil menyimpan jawaban!", { id: toastId });
+        navigateAfterSubtest();
+      } catch (err) {
+        toast.error(getErrorMessage(err, "Gagal menyimpan jawaban"), {
+          id: toastId,
+        });
+      }
     } else {
       navigateAfterSubtest();
     }
@@ -259,18 +303,22 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     <div className="fixed inset-0 z-40 bg-white flex flex-col">
       {/* Top Bar */}
       <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 bg-white">
-        <button onClick={handleExitExam} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors">
+        <button
+          onClick={handleExitExam}
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+        >
           <X className="w-5 h-5" />
-          <span className="font-bold text-sm hidden sm:inline">Judul Try Out</span>
+          <span className="font-bold text-sm hidden sm:inline">
+            Judul Try Out
+          </span>
         </button>
         <div className="text-center">
           <p className="text-xs text-gray-500">Nomor Soal</p>
-          <p className="font-bold text-lg text-gray-900">{currentQuestionIndex + 1}</p>
+          <p className="font-bold text-lg text-gray-900">
+            {currentQuestionIndex + 1}
+          </p>
         </div>
-        <ExamTimer
-          remainingSeconds={timerSeconds}
-          onTimeUp={handleTimeUp}
-        />
+        <ExamTimer remainingSeconds={timerSeconds} onTimeUp={handleTimeUp} />
       </header>
 
       {/* Main Content */}
@@ -291,10 +339,18 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
         {/* Question Area */}
         <QuestionView
           question={currentQuestion}
-          selectedAnswer={answers[currentQuestion.id] ?? currentQuestion.my_answer}
+          selectedAnswer={
+            answers[currentQuestion.id] ?? currentQuestion.my_answer
+          }
           onSelectAnswer={handleSelectAnswer}
-          onPrev={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-          onNext={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+          onPrev={() =>
+            setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
+          }
+          onNext={() =>
+            setCurrentQuestionIndex((prev) =>
+              Math.min(questions.length - 1, prev + 1),
+            )
+          }
           onFinish={handleFinishSubtest}
           hasPrev={currentQuestionIndex > 0}
           hasNext={currentQuestionIndex < questions.length - 1}
@@ -334,7 +390,13 @@ export default function ExamPage({
   const { id: tryoutId } = use(params);
 
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#004AAB]" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#004AAB]" />
+        </div>
+      }
+    >
       <ExamContent tryoutId={tryoutId} />
     </Suspense>
   );
