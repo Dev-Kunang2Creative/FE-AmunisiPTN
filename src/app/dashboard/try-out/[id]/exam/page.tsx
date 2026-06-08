@@ -9,6 +9,7 @@ import ExamSidebar from "@/components/molecules/exam/ExamSidebar";
 import QuestionView from "@/components/molecules/exam/QuestionView";
 import DialogFinishSubtest from "@/components/molecules/dialog/DialogFinishSubtest";
 import DialogExitExam from "@/components/molecules/dialog/DialogExitExam";
+import DialogTimeUp from "@/components/molecules/dialog/DialogTimeUp";
 import { useSubmitAnswer } from "@/http/tryout/submit-answer";
 import { useFinishSubtest } from "@/http/tryout/finish-subtest";
 import { useStartSubtest } from "@/http/tryout/start-subtest";
@@ -40,6 +41,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const [answers, setAnswers] = useState<Record<string, string | null>>({});
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -207,6 +209,11 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   };
 
   const handleTimeUp = () => {
+    setShowTimeUpDialog(true);
+  };
+
+  const confirmTimeUp = () => {
+    setShowTimeUpDialog(false);
     if (currentSubtest) {
       finishSubtestMutation.mutate({ tryoutId, subtestId: currentSubtest.id });
     } else {
@@ -307,6 +314,13 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
         open={showExitDialog}
         onOpenChange={setShowExitDialog}
         onConfirm={confirmExitExam}
+      />
+
+      {/* Time Up Dialog */}
+      <DialogTimeUp
+        open={showTimeUpDialog}
+        onOpenChange={setShowTimeUpDialog}
+        onConfirm={confirmTimeUp}
       />
     </div>
   );
