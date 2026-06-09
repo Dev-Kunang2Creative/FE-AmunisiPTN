@@ -75,10 +75,10 @@ export default function TryoutPage() {
     isHistoryFetching;
 
   const getStatusOrder = (item: { startDate: string; endDate: string }) => {
-    const start = new Date(item.startDate).getTime();
-    const end = new Date(item.endDate).getTime();
-    if (INITIAL_TIME >= start && INITIAL_TIME <= end) return 0;
-    if (INITIAL_TIME < start) return 1;
+    const start = item.startDate ? new Date(item.startDate).getTime() : 0;
+    const end = item.endDate ? new Date(item.endDate).getTime() : 0;
+    if (start && end && INITIAL_TIME >= start && INITIAL_TIME <= end) return 0;
+    if (start && INITIAL_TIME < start) return 1;
     return 2;
   };
 
@@ -95,23 +95,18 @@ export default function TryoutPage() {
             (activeFilter === "Terdaftar" && enrolledTryoutIds.has(item.id))),
       )
       .sort((a, b) => {
-        if (sortBy === "newest")
-          return (
-            new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-          );
-        if (sortBy === "oldest")
-          return (
-            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-          );
+        const timeA = a.startDate ? new Date(a.startDate).getTime() : 0;
+        const timeB = b.startDate ? new Date(b.startDate).getTime() : 0;
+
+        if (sortBy === "newest") return timeB - timeA;
+        if (sortBy === "oldest") return timeA - timeB;
         if (sortBy === "title") return a.title.localeCompare(b.title);
         if (sortBy === "participants")
           return b.participantsCount - a.participantsCount;
 
         const statusDiff = getStatusOrder(a) - getStatusOrder(b);
         if (statusDiff !== 0) return statusDiff;
-        return (
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-        );
+        return timeA - timeB;
       });
   }, [
     activeFilter,
