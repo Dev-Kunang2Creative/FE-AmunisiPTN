@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, useEffect, use, Suspense, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  use,
+  Suspense,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import type { AxiosError } from "axios";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import ExamTimer from "@/components/molecules/exam/ExamTimer";
@@ -47,6 +56,12 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
+
+  // Guard so the time-up / auto-submit flow only runs once per subtest.
+  const timeUpHandledRef = useRef(false);
+  // Holds the latest auto-submit handler so the load effect can call it
+  // without depending on its (changing) identity.
+  const autoSubmitRef = useRef<() => void>(() => {});
 
   // Fetch tryout detail to get subtests list
   const { data: tryoutDetail } = useGetUserTryoutDetail({
@@ -117,61 +132,67 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
       setAnswers({});
     });
 
+    // Fetch exam questions; detect an already-expired subtest so we can
+    // auto-submit and advance instead of getting stuck on the loader.
+    const loadExam = () => {
+      refetchExam()
+        .then((result) => {
+          const data = result.data?.data;
+          const questionsList = data?.questions;
+
+          if (questionsList && questionsList.length > 0) {
+            setQuestions(questionsList);
+            // Pre-fill answers from BE (my_answer field)
+            const preAnswers: Record<string, string | null> = {};
+            questionsList.forEach((q) => {
+              if (q.my_answer) preAnswers[q.id] = q.my_answer;
+            });
+            setAnswers(preAnswers);
+
+            // Use timer from BE data if available
+            if (data?.timer) {
+              setTimerSeconds(data.timer.remaining_seconds);
+            }
+            setIsLoading(false);
+            return;
+          }
+
+          // No questions returned — the subtest may already be expired.
+          const errorBody = (
+            result.error as AxiosError<{
+              data?: {
+                timer?: { remaining_seconds?: number; status?: string };
+              };
+            }> | null
+          )?.response?.data;
+          const isExpired =
+            errorBody?.data?.timer?.status === "expired" ||
+            errorBody?.data?.timer?.remaining_seconds === 0 ||
+            data?.timer?.status === "expired" ||
+            data?.timer?.remaining_seconds === 0;
+
+          setIsLoading(false);
+
+          if (isExpired) {
+            // Time already ran out: auto-submit and move on.
+            autoSubmitRef.current();
+          } else {
+            setQuestions([]);
+          }
+        })
+        .catch(() => {
+          setQuestions([]);
+          setIsLoading(false);
+        });
+    };
+
     // Start the subtest session (to get timer), then fetch questions
     startSubtest(
       { tryoutId, subtestId: currentSubtest.id },
       {
-        onSuccess: () => {
-          // Fetch exam questions
-          refetchExam()
-            .then((result) => {
-              if (result.data?.data?.questions) {
-                setQuestions(result.data.data.questions);
-                // Pre-fill answers from BE (my_answer field)
-                const preAnswers: Record<string, string | null> = {};
-                result.data.data.questions.forEach((q) => {
-                  if (q.my_answer) preAnswers[q.id] = q.my_answer;
-                });
-                setAnswers(preAnswers);
-
-                // Use timer from BE data if available
-                if (result.data.data.timer) {
-                  setTimerSeconds(result.data.data.timer.remaining_seconds);
-                }
-              }
-              setIsLoading(false);
-            })
-            .catch(() => {
-              setQuestions([]);
-              setIsLoading(false);
-            });
-        },
-        onError: () => {
-          // Fallback: still try to fetch questions (maybe subtest was already started)
-          refetchExam()
-            .then((result) => {
-              if (result.data?.data?.questions) {
-                setQuestions(result.data.data.questions);
-                const preAnswers: Record<string, string | null> = {};
-                result.data.data.questions.forEach((q) => {
-                  if (q.my_answer) preAnswers[q.id] = q.my_answer;
-                });
-                setAnswers(preAnswers);
-                if (result.data.data.timer) {
-                  setTimerSeconds(result.data.data.timer.remaining_seconds);
-                }
-              } else {
-                setQuestions([]);
-                setTimerSeconds((currentSubtest?.duration || 30) * 60);
-              }
-              setIsLoading(false);
-            })
-            .catch(() => {
-              setQuestions([]);
-              setTimerSeconds((currentSubtest?.duration || 30) * 60);
-              setIsLoading(false);
-            });
-        },
+        onSuccess: loadExam,
+        // Fallback: still try to fetch (maybe subtest was already started)
+        onError: loadExam,
       },
     );
   }, [currentSubtest, refetchExam, startSubtest, tryoutId]);
@@ -185,7 +206,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     },
   });
 
-  const finishSubtestMutation = useFinishSubtest({
+  const { mutateAsync: finishSubtestAsync } = useFinishSubtest({
     token,
   });
 
@@ -217,7 +238,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     }
   };
 
-  const navigateAfterSubtest = () => {
+  const navigateAfterSubtest = useCallback(() => {
     const nextIndex = currentSubtestIndex + 1;
     if (nextIndex < totalSubtests) {
       router.push(
@@ -226,32 +247,41 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     } else {
       router.push(`/dashboard/try-out/${tryoutId}/tryout-complete`);
     }
-  };
+  }, [currentSubtestIndex, totalSubtests, router, tryoutId]);
 
-  const handleTimeUp = () => {
-    setShowTimeUpDialog(true);
-  };
-
-  const confirmTimeUp = async () => {
+  // Auto-submit the current subtest and advance. Always navigates, even if the
+  // finish request fails, because the backend already marks an expired subtest
+  // on its own — otherwise the user would be stuck with the timer at 00:00.
+  const autoSubmitAndAdvance = useCallback(async () => {
+    if (timeUpHandledRef.current) return;
+    timeUpHandledRef.current = true;
     setShowTimeUpDialog(false);
-    if (currentSubtest) {
-      const toastId = toast.loading("Menyimpan jawaban Anda...");
-      try {
-        await finishSubtestMutation.mutateAsync({
+
+    const toastId = toast.loading("Menyimpan jawaban Anda...");
+    try {
+      if (currentSubtest) {
+        await finishSubtestAsync({
           tryoutId,
           subtestId: currentSubtest.id,
         });
-        toast.success("Berhasil menyimpan jawaban!", { id: toastId });
-        navigateAfterSubtest();
-      } catch (err) {
-        toast.error(getErrorMessage(err, "Gagal menyimpan jawaban"), {
-          id: toastId,
-        });
       }
-    } else {
+      toast.success("Berhasil menyimpan jawaban!", { id: toastId });
+    } catch {
+      // Non-fatal: the subtest is already expired on the server.
+      toast.dismiss(toastId);
+    } finally {
       navigateAfterSubtest();
     }
-  };
+  }, [currentSubtest, finishSubtestAsync, tryoutId, navigateAfterSubtest]);
+
+  // Keep the ref pointing at the latest handler for the load effect.
+  useEffect(() => {
+    autoSubmitRef.current = autoSubmitAndAdvance;
+  }, [autoSubmitAndAdvance]);
+
+  const handleTimeUp = useCallback(() => {
+    setShowTimeUpDialog(true);
+  }, []);
 
   const handleFinishSubtest = () => {
     setShowFinishDialog(true);
@@ -262,7 +292,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     if (currentSubtest) {
       const toastId = toast.loading("Menyimpan jawaban Anda...");
       try {
-        await finishSubtestMutation.mutateAsync({
+        await finishSubtestAsync({
           tryoutId,
           subtestId: currentSubtest.id,
         });
@@ -376,7 +406,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
       <DialogTimeUp
         open={showTimeUpDialog}
         onOpenChange={setShowTimeUpDialog}
-        onConfirm={confirmTimeUp}
+        onConfirm={autoSubmitAndAdvance}
       />
     </div>
   );

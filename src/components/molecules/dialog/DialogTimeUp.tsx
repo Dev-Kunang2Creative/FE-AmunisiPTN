@@ -27,7 +27,7 @@ export default function DialogTimeUp({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md text-center p-8 rounded-2xl" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent showCloseButton={false} className="sm:max-w-md text-center p-8 rounded-2xl" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="w-16 h-16 flex items-center justify-center mb-1">
             <span className="text-5xl">⏰</span>
