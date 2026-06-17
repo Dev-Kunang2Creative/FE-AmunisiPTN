@@ -50,11 +50,14 @@ export default function RiwayatTryoutPage() {
         return matchesSearch && matchesTryoutName && matchesStatus;
       })
       .sort((a, b) => {
-        if (sortBy === "oldest") return new Date(a.dateTaken).getTime() - new Date(b.dateTaken).getTime();
+        const timeA = a.dateTaken ? new Date(a.dateTaken).getTime() : 0;
+        const timeB = b.dateTaken ? new Date(b.dateTaken).getTime() : 0;
+
+        if (sortBy === "oldest") return timeA - timeB;
         if (sortBy === "score_high") return b.score - a.score;
         if (sortBy === "score_low") return a.score - b.score;
         if (sortBy === "attempt") return b.attemptNumber - a.attemptNumber;
-        return new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime();
+        return timeB - timeA;
       });
   }, [histories, searchQuery, sortBy, statusFilter, tryoutNameFilter]);
 

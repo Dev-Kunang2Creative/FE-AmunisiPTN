@@ -69,8 +69,9 @@ export default function TryoutStartPage({
   const startTryoutMutation = useStartTryout({
     token,
     options: {
-      onSuccess: () => {
-        router.push(`/dashboard/try-out/${tryoutId}/exam`);
+      onSuccess: (data: any) => {
+        const activeIndex = data?.data?.active_subtest_index ?? 0;
+        router.push(`/dashboard/try-out/${tryoutId}/exam?subtest=${activeIndex}`);
       },
       onError: (error: unknown) => {
         const msg = getErrorMessage(error, "Gagal memulai tryout");
