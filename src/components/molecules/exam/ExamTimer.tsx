@@ -17,13 +17,25 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: ExamTimerProps
     onTimeUpRef.current = onTimeUp;
   }, [onTimeUp]);
 
+  // Ensure onTimeUp fires at most once per timer run.
+  const firedRef = useRef(false);
+  const fireTimeUp = () => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    onTimeUpRef.current();
+  };
+
   useEffect(() => {
     setDisplaySeconds(normalizedRemainingSeconds);
+    // A fresh (positive) duration means a new timer run — allow firing again.
+    if (normalizedRemainingSeconds > 0) {
+      firedRef.current = false;
+    }
   }, [normalizedRemainingSeconds]);
 
   useEffect(() => {
     if (normalizedRemainingSeconds <= 0) {
-      onTimeUpRef.current();
+      fireTimeUp();
       return;
     }
 
@@ -32,11 +44,11 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: ExamTimerProps
     const timer = setInterval(() => {
       const now = Date.now();
       const diff = Math.max(Math.ceil((endTime - now) / 1000), 0);
-      
+
       if (diff <= 0) {
         clearInterval(timer);
         setDisplaySeconds(0);
-        onTimeUpRef.current();
+        fireTimeUp();
       } else {
         setDisplaySeconds(diff);
       }
