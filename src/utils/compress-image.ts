@@ -30,10 +30,8 @@ export async function compressImage(file: File): Promise<File> {
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Preserve original type if supported, fallback to jpeg
-      const outputType = ["image/jpeg", "image/webp", "image/png"].includes(file.type)
-        ? file.type
-        : "image/jpeg";
+      // Force WebP output for better compression and modern web standard
+      const outputType = "image/webp";
 
       canvas.toBlob(
         (blob) => {
@@ -41,7 +39,9 @@ export async function compressImage(file: File): Promise<File> {
             reject(new Error("Gagal mengompresi gambar"));
             return;
           }
-          const compressed = new File([blob], file.name, {
+          
+          const fileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+          const compressed = new File([blob], fileName, {
             type: outputType,
             lastModified: Date.now(),
           });
