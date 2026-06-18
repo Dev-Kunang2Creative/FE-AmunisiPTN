@@ -7,6 +7,7 @@ export interface Tryout {
   description: string;
   is_published: boolean;
   is_free: boolean;
+  require_ticket_for_discussion?: boolean;
   use_irt: boolean;
   randomize_options: boolean;
   created_at: Date;
