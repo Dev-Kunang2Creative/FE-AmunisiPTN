@@ -19,7 +19,8 @@ import { useGetDetailSubtest } from "@/http/subtest/get-detail-subtest";
 import { Question } from "@/types/questions/question";
 import { useQueryClient } from "@tanstack/react-query";
 import DialogBulkImportQuestion from "@/components/molecules/dialog/DialogBulkImportQuestion";
-import { FileSpreadsheet, Plus } from "lucide-react";
+import DialogUpdateQuestionImages from "@/components/molecules/dialog/DialogUpdateQuestionImages";
+import { FileSpreadsheet, ImageUp, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -58,6 +59,7 @@ export default function DashboardadminSubtestDetailWrapper({
   const [isSelectedDeleteQuestion, setIsSelectedDeleteQuestion] =
     useState<Question | null>(null);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isUpdateImagesOpen, setIsUpdateImagesOpen] = useState(false);
 
   const deleteQuestionHandler = (data: Question) => {
     setIsSelectedDeleteQuestion(data);
@@ -211,6 +213,15 @@ export default function DashboardadminSubtestDetailWrapper({
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
                   Import Excel
                 </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setIsUpdateImagesOpen(true)}
+                  className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                >
+                  <ImageUp className="w-4 h-4 mr-2" />
+                  Perbaiki Gambar
+                </Button>
                 <Button asChild size={"lg"}>
                   <Link href={`/dashboard/admin/subtest/${id}/create`}>
                     <Plus /> Tambah Pertanyaan
@@ -242,6 +253,12 @@ export default function DashboardadminSubtestDetailWrapper({
       <DialogBulkImportQuestion
         open={isBulkImportOpen}
         onOpenChange={setIsBulkImportOpen}
+        subtestId={id}
+      />
+
+      <DialogUpdateQuestionImages
+        open={isUpdateImagesOpen}
+        onOpenChange={setIsUpdateImagesOpen}
         subtestId={id}
       />
     </section>
