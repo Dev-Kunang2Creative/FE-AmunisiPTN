@@ -201,8 +201,10 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const submitAnswerMutation = useSubmitAnswer({
     token,
     options: {
-      onError: (error: unknown) =>
-        console.error("Failed to submit answer:", error),
+      onError: (error: unknown) => {
+        console.error("Failed to submit answer:", error);
+        toast.error("Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.");
+      }
     },
   });
 

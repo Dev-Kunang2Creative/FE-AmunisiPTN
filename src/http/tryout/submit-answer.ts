@@ -38,6 +38,8 @@ export const useSubmitAnswer = ({
 }) => {
   return useMutation({
     mutationFn: (payload: SubmitAnswerPayload) => SubmitAnswerHandler(payload, token),
+    retry: 3,
+    retryDelay: 1000,
     ...options,
   });
 };
