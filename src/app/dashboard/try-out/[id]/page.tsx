@@ -3,6 +3,7 @@
 import { useState, use } from "react";
 import Link from "next/link";
 import { ChevronLeft, FileText, Clock, Ticket, Upload, X, Instagram, ExternalLink } from "lucide-react";
+import { compressImage } from "@/utils/compress-image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -122,7 +123,7 @@ export default function TryoutDetailPage({
   const MIN_PROOF_IMAGES = 2;
   const MAX_PROOF_IMAGES = 5;
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (!selectedFiles.length) return;
 
@@ -133,34 +134,38 @@ export default function TryoutDetailPage({
       return;
     }
 
-    const files = selectedFiles.slice(0, remainingSlots);
+    const rawFiles = selectedFiles.slice(0, remainingSlots);
     if (selectedFiles.length > remainingSlots) {
       toast.warning(`Hanya ${remainingSlots} gambar yang ditambahkan. Maksimal ${MAX_PROOF_IMAGES} gambar.`);
     }
 
-    const invalidType = files.find((file) => !ALLOWED_TYPES.includes(file.type));
+    const invalidType = rawFiles.find((file) => !ALLOWED_TYPES.includes(file.type));
     if (invalidType) {
       toast.error("Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP.");
       e.target.value = "";
       return;
     }
 
-    const oversizedFile = files.find((file) => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
-    if (oversizedFile) {
-      toast.error(`Ukuran gambar melebihi batas ${MAX_FILE_SIZE_MB}MB.`);
-      e.target.value = "";
-      return;
-    }
+    const toastId = toast.loading("Memproses gambar...");
+    try {
+      const compressedFiles = await Promise.all(
+        rawFiles.map((file) => compressImage(file))
+      );
 
-    setProofImages((current) => [...current, ...files]);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProofPreviews((current) => [...current, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
+      setProofImages((current) => [...current, ...compressedFiles]);
+      compressedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setProofPreviews((current) => [...current, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+      toast.dismiss(toastId);
+    } catch (error) {
+      toast.error("Gagal memproses gambar.");
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const removeProofImage = (index: number) => {
@@ -373,7 +378,7 @@ export default function TryoutDetailPage({
                       <span className="text-xs text-gray-400 mt-1 text-center px-4">
                         Minimal 2 foto bukti follow, maksimal {MAX_PROOF_IMAGES} foto
                       </span>
-                      <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP, maks 2MB per foto</span>
+                      <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP</span>
                       <input
                         type="file"
                         multiple

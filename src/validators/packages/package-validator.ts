@@ -25,10 +25,7 @@ export const packageSchema = z
             file.type,
           ),
         { message: "Format gambar harus jpg, jpeg, png, atau webp" },
-      )
-      .refine((file) => !file || file.size <= 2 * 1024 * 1024, {
-        message: "Ukuran gambar maksimal 2MB",
-      }),
+      ),
 
     price: z.number().min(0, "Harga tidak boleh negatif").default(10000),
 
