@@ -35,7 +35,6 @@ import { CURRENCIES } from "@/constants/currency";
 import { useSession } from "next-auth/react";
 import { useUpdatePackage } from "@/http/packages/update-package";
 import { ImagePlus, X } from "lucide-react";
-import { compressImage } from "@/utils/compress-image";
 
 const STORAGE_BASE_URL =
   process.env.NEXT_PUBLIC_STORAGE_URL ??
@@ -137,20 +136,13 @@ export default function FormUpdatePackage({
     updatePackageHandler({ id: packageId, body });
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     if (file) {
-      try {
-        const compressed = await compressImage(file);
-        form.setValue("thumbnail", compressed, { shouldValidate: true });
-        const url = URL.createObjectURL(compressed);
-        setThumbnailPreview(url);
-        setExistingThumbnail(null);
-      } catch {
-        toast.error("Gagal memproses gambar");
-        form.setValue("thumbnail", null, { shouldValidate: true });
-        setThumbnailPreview(null);
-      }
+      form.setValue("thumbnail", file, { shouldValidate: true });
+      const url = URL.createObjectURL(file);
+      setThumbnailPreview(url);
+      setExistingThumbnail(null);
     } else {
       setThumbnailPreview(null);
     }

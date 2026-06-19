@@ -12,7 +12,6 @@ import {
   Instagram,
   ExternalLink,
 } from "lucide-react";
-import { compressImage } from "@/utils/compress-image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -194,26 +193,16 @@ export default function TryoutDetailPage({
       return;
     }
 
-    const toastId = toast.loading("Memproses gambar...");
-    try {
-      const compressedFiles = await Promise.all(
-        rawFiles.map((file) => compressImage(file)),
-      );
-
-      setProofImages((current) => [...current, ...compressedFiles]);
-      compressedFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setProofPreviews((current) => [...current, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
-      toast.dismiss(toastId);
-    } catch (error) {
-      toast.error("Gagal memproses gambar.");
-    } finally {
-      e.target.value = "";
-    }
+    setProofImages((current) => [...current, ...rawFiles]);
+    rawFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProofPreviews((current) => [...current, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    e.target.value = "";
   };
 
   const removeProofImage = (index: number) => {

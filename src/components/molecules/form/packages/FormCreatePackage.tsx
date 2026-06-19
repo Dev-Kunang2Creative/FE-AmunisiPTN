@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/select";
 import { CURRENCIES } from "@/constants/currency";
 import { ImagePlus, X } from "lucide-react";
-import { compressImage } from "@/utils/compress-image";
 
 export default function FormCreatePackage() {
   const form = useForm<PackageFormInput>({
@@ -87,19 +86,12 @@ export default function FormCreatePackage() {
     createPackageHandler(body);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     if (file) {
-      try {
-        const compressed = await compressImage(file);
-        form.setValue("thumbnail", compressed, { shouldValidate: true });
-        const url = URL.createObjectURL(compressed);
-        setThumbnailPreview(url);
-      } catch {
-        toast.error("Gagal memproses gambar");
-        form.setValue("thumbnail", null, { shouldValidate: true });
-        setThumbnailPreview(null);
-      }
+      form.setValue("thumbnail", file, { shouldValidate: true });
+      const url = URL.createObjectURL(file);
+      setThumbnailPreview(url);
     } else {
       form.setValue("thumbnail", null, { shouldValidate: true });
       setThumbnailPreview(null);

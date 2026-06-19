@@ -248,20 +248,12 @@ export default function FormEditQuestion({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
+                      field.onChange(file);
                       if (file) {
-                        try {
-                          const compressed = await compressImage(file);
-                          field.onChange(compressed);
-                          form.setValue("delete_question_image", false);
-                          setQuestionPreview(URL.createObjectURL(compressed));
-                        } catch {
-                          toast.error("Gagal memproses gambar soal");
-                          field.onChange(null);
-                        }
-                      } else {
-                        field.onChange(null);
+                        form.setValue("delete_question_image", false);
+                        setQuestionPreview(URL.createObjectURL(file));
                       }
                     }}
                   />
@@ -398,20 +390,12 @@ export default function FormEditQuestion({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
+                      field.onChange(file);
                       if (file) {
-                        try {
-                          const compressed = await compressImage(file);
-                          field.onChange(compressed);
-                          form.setValue("delete_discussion_image", false);
-                          setDiscussionPreview(URL.createObjectURL(compressed));
-                        } catch {
-                          toast.error("Gagal memproses gambar pembahasan");
-                          field.onChange(null);
-                        }
-                      } else {
-                        field.onChange(null);
+                        form.setValue("delete_discussion_image", false);
+                        setDiscussionPreview(URL.createObjectURL(file));
                       }
                     }}
                   />
