@@ -212,6 +212,9 @@ export default function AdminUserTryoutReviewPage({
           hasPrev={currentQuestionIndex > 0}
           hasNext={currentQuestionIndex < questions.length - 1}
           mode="admin-review"
+          currentNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+          subtestName={selectedSubtestName}
         />
       </div>
     </div>
