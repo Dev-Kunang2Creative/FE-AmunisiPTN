@@ -339,7 +339,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
         >
           <X className="w-5 h-5" />
           <span className="font-bold text-sm hidden sm:inline">
-            Judul Try Out
+            {tryoutDetail?.data?.title || "Judul Try Out"}
           </span>
         </button>
         <div className="text-center">
