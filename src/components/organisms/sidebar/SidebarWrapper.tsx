@@ -43,6 +43,7 @@ import {
   LifeBuoy,
   Ticket,
   Images,
+  MessageSquareWarning,
 } from "lucide-react";
 import { SidebarUser } from "./SidebarUser";
 import { DASHBOARD_MENU } from "@/constants/dashboard-menu";
@@ -337,6 +338,23 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                       <Link href="/dashboard/tiket/riwayat" className="flex items-center w-full gap-3">
                         <Ticket className="w-5 h-5 shrink-0" />
                         <span>Riwayat Tiket</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem className="w-full relative">
+                    <SidebarMenuButton
+                      asChild
+                      className="h-11 justify-start px-4 rounded-xl transition-all w-full flex items-center text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
+                    >
+                      <Link 
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSf8rup9kdF3KmFViVTYktraeGo43zuY7m_TXtu0Et2ea4RrVQ/viewform?usp=publish-editor" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center w-full gap-3"
+                      >
+                        <MessageSquareWarning className="w-5 h-5 shrink-0" />
+                        <span>Form Aduan</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

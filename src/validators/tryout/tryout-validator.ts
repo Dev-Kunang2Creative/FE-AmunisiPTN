@@ -13,6 +13,7 @@ export const tryoutSchema = z.object({
 
   is_published: z.boolean(),
   is_free: z.boolean(),
+  require_ticket_for_discussion: z.boolean().optional(),
   use_irt: z.boolean(),
   randomize_options: z.boolean(),
 

@@ -201,8 +201,10 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const submitAnswerMutation = useSubmitAnswer({
     token,
     options: {
-      onError: (error: unknown) =>
-        console.error("Failed to submit answer:", error),
+      onError: (error: unknown) => {
+        console.error("Failed to submit answer:", error);
+        toast.error("Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.");
+      }
     },
   });
 
@@ -339,15 +341,9 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
         >
           <X className="w-5 h-5" />
           <span className="font-bold text-sm hidden sm:inline">
-            Judul Try Out
+            {tryoutDetail?.data?.title || "Judul Try Out"}
           </span>
         </button>
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Nomor Soal</p>
-          <p className="font-bold text-lg text-gray-900">
-            {currentQuestionIndex + 1}
-          </p>
-        </div>
         <ExamTimer remainingSeconds={timerSeconds} onTimeUp={handleTimeUp} />
       </header>
 
@@ -384,6 +380,9 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
           onFinish={handleFinishSubtest}
           hasPrev={currentQuestionIndex > 0}
           hasNext={currentQuestionIndex < questions.length - 1}
+          currentNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+          subtestName={currentSubtest.name}
         />
       </div>
 

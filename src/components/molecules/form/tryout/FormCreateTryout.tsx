@@ -52,6 +52,7 @@ export default function FormCreateTryout() {
       end_date: "",
       is_published: false,
       is_free: false,
+      require_ticket_for_discussion: false,
       use_irt: true,
       randomize_options: false,
       image: null,
@@ -338,6 +339,31 @@ export default function FormCreateTryout() {
                 </Field>
               )}
             />
+
+            {form.watch("is_free") && (
+              <Controller
+                control={form.control}
+                name="require_ticket_for_discussion"
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel>Gunakan Tiket untuk Buka Pembahasan</FieldLabel>
+
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+
+                      <span className="text-sm text-muted-foreground">
+                        {field.value
+                          ? "Butuh 1 tiket untuk buka pembahasan"
+                          : "Pembahasan gratis"}
+                      </span>
+                    </div>
+                  </Field>
+                )}
+              />
+            )}
 
             <Controller
               control={form.control}

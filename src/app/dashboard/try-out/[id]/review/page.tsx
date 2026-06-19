@@ -32,7 +32,12 @@ export default function ReviewPage({
   const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
   const { ticketCount } = useTickets();
 
-  const { data: beReview, isError, isLoading, refetch } = useGetTryoutReview({
+  const {
+    data: beReview,
+    isError,
+    isLoading,
+    refetch,
+  } = useGetTryoutReview({
     tryoutId,
     token,
     attempt,
@@ -58,13 +63,18 @@ export default function ReviewPage({
 
   const reviewItems = useMemo(() => beReview?.data?.review ?? [], [beReview]);
   const isLocked = useMemo(() => {
-    return reviewItems.some(item => item.question.discussion === '(Gunakan 1 Tiket untuk pembahasan)');
+    return reviewItems.some(
+      (item) =>
+        item.question.discussion === "(Gunakan 1 Tiket untuk pembahasan)",
+    );
   }, [reviewItems]);
   const subtests = useMemo(() => {
     const map = new Map<string, string>();
     reviewItems.forEach((item) => {
       const rawName = item.subtest.name;
-      const displayName = rawName.includes("_") ? rawName.split("_").slice(1).join("_") : rawName;
+      const displayName = rawName.includes("_")
+        ? rawName.split("_").slice(1).join("_")
+        : rawName;
       map.set(item.subtest.id, displayName);
     });
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
@@ -75,15 +85,17 @@ export default function ReviewPage({
     return reviewItems.filter((item) => item.subtest.id === selectedSubtestId);
   }, [reviewItems, selectedSubtestId]);
 
-  const questions = useMemo(() => filteredItems.map(mapReviewQuestionToExamQuestion), [filteredItems]);
+  const questions = useMemo(
+    () => filteredItems.map(mapReviewQuestionToExamQuestion),
+    [filteredItems],
+  );
   const reviewStatuses = useMemo(() => {
-    return filteredItems.reduce<Record<string, ReturnType<typeof getReviewQuestionStatus>>>(
-      (acc, item) => {
-        acc[item.question_id] = getReviewQuestionStatus(item);
-        return acc;
-      },
-      {},
-    );
+    return filteredItems.reduce<
+      Record<string, ReturnType<typeof getReviewQuestionStatus>>
+    >((acc, item) => {
+      acc[item.question_id] = getReviewQuestionStatus(item);
+      return acc;
+    }, {});
   }, [filteredItems]);
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -91,7 +103,8 @@ export default function ReviewPage({
   const selectedSubtestName =
     selectedSubtestId === "all"
       ? "Semua Subtest"
-      : subtests.find((subtest) => subtest.id === selectedSubtestId)?.name ?? "Subtest";
+      : (subtests.find((subtest) => subtest.id === selectedSubtestId)?.name ??
+        "Subtest");
 
   const handleSelectSubtest = (subtestId: string) => {
     setSelectedSubtestId(subtestId);
@@ -113,9 +126,12 @@ export default function ReviewPage({
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Pembahasan belum tersedia</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            Pembahasan belum tersedia
+          </h1>
           <p className="text-sm text-gray-500 mb-5">
-            Kamu belum mengerjakan Try Out ini, sehingga pembahasan belum tersedia.
+            Kamu belum mengerjakan Try Out ini, sehingga pembahasan belum
+            tersedia.
           </p>
           <button
             type="button"
@@ -134,7 +150,9 @@ export default function ReviewPage({
       <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 bg-white">
         <button
           type="button"
-          onClick={() => router.push(`/dashboard/try-out/${tryoutId}/result${attemptQuery}`)}
+          onClick={() =>
+            router.push(`/dashboard/try-out/${tryoutId}/result${attemptQuery}`)
+          }
           className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
         >
           <X className="w-5 h-5" />
@@ -144,7 +162,9 @@ export default function ReviewPage({
         </button>
         <div className="text-center">
           <p className="text-xs text-gray-500">Nomor Soal</p>
-          <p className="font-bold text-lg text-gray-900">{currentQuestionIndex + 1}</p>
+          <p className="font-bold text-lg text-gray-900">
+            {currentQuestionIndex + 1}
+          </p>
         </div>
         <div className="rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-[#004AAB]">
           Mode Review
@@ -176,7 +196,12 @@ export default function ReviewPage({
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"
                 }`}
               >
-                {subtest.name} ({reviewItems.filter((item) => item.subtest.id === subtest.id).length})
+                {subtest.name} (
+                {
+                  reviewItems.filter((item) => item.subtest.id === subtest.id)
+                    .length
+                }
+                )
               </button>
             ))}
           </div>
@@ -186,7 +211,11 @@ export default function ReviewPage({
             totalQuestions={questions.length}
             currentIndex={currentQuestionIndex}
             answeredQuestions={
-              new Set(filteredItems.filter((item) => item.my_answer).map((item) => item.question_id))
+              new Set(
+                filteredItems
+                  .filter((item) => item.my_answer)
+                  .map((item) => item.question_id),
+              )
             }
             questionIds={questions.map((question) => question.id)}
             onQuestionClick={(index) => setCurrentQuestionIndex(index)}
@@ -209,12 +238,23 @@ export default function ReviewPage({
           question={currentQuestion}
           selectedAnswer={currentReviewItem?.my_answer ?? null}
           onSelectAnswer={() => undefined}
-          onPrev={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-          onNext={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-          onFinish={() => router.push(`/dashboard/try-out/${tryoutId}/result${attemptQuery}`)}
+          onPrev={() =>
+            setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
+          }
+          onNext={() =>
+            setCurrentQuestionIndex((prev) =>
+              Math.min(questions.length - 1, prev + 1),
+            )
+          }
+          onFinish={() =>
+            router.push(`/dashboard/try-out/${tryoutId}/result${attemptQuery}`)
+          }
           hasPrev={currentQuestionIndex > 0}
           hasNext={currentQuestionIndex < questions.length - 1}
           mode="review"
+          currentNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+          subtestName={selectedSubtestName}
         />
       </div>
 
