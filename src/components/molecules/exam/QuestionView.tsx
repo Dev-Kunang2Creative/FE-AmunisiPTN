@@ -8,6 +8,8 @@ import {
   getReviewOptionState,
   type TryoutLayoutMode,
 } from "@/utils/tryout-review";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 interface QuestionViewProps {
   question: ExamQuestion;
@@ -109,19 +111,22 @@ export default function QuestionView({
         {question.question_image_url && (
           <div className="mb-6 flex justify-center">
             <div className="relative max-w-full max-h-75 w-auto">
-              <img
-                src={question.question_image_url}
-                alt="Soal"
-                className="max-h-75 w-auto object-contain rounded-lg"
-              />
+              <Zoom>
+                <img
+                  src={question.question_image_url}
+                  alt="Soal"
+                  className="max-h-75 w-auto object-contain rounded-lg"
+                />
+              </Zoom>
             </div>
           </div>
         )}
 
-        <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
+        <div>
           <RichTextRenderer
             html={question.question_text}
             className="mb-6 text-gray-800 font-normal"
+            style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
           />
         </div>
 
@@ -136,6 +141,7 @@ export default function QuestionView({
                   <RichTextRenderer
                     html={selectedAnswer}
                     className="text-gray-800"
+                    style={{ fontSize: `${fontSize}px` }}
                   />
                 ) : (
                   <p className="text-sm text-gray-500">Tidak ada jawaban.</p>
@@ -211,6 +217,7 @@ export default function QuestionView({
                     <RichTextRenderer
                       html={option.option_text}
                       className={`pt-1 ${textClass}`}
+                      style={{ fontSize: `${fontSize}px` }}
                     />
                     {isReviewMode && (isCorrectAnswer || isUserWrongAnswer) && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -249,7 +256,8 @@ export default function QuestionView({
             {question.discussion ? (
               <RichTextRenderer
                 html={question.discussion}
-                className="text-gray-700"
+                className="text-gray-800"
+                style={{ fontSize: `${fontSize}px` }}
               />
             ) : (
               <p className="text-sm leading-relaxed text-gray-600">
@@ -257,11 +265,13 @@ export default function QuestionView({
               </p>
             )}
             {question.discussion_image_url && (
-              <img
-                src={question.discussion_image_url}
-                alt="Pembahasan"
-                className="mt-4 max-h-[240px] rounded-lg object-contain"
-              />
+              <Zoom>
+                <img
+                  src={question.discussion_image_url}
+                  alt="Pembahasan"
+                  className="mt-4 max-h-[240px] rounded-lg object-contain"
+                />
+              </Zoom>
             )}
             {!isEssay && !question.correct_answer && (
               <p className="mt-3 text-xs font-medium text-amber-700">

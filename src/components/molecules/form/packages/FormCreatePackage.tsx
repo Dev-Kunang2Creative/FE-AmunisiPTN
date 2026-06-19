@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { CURRENCIES } from "@/constants/currency";
 import { ImagePlus, X } from "lucide-react";
+import { compressImage } from "@/utils/compress-image";
 
 export default function FormCreatePackage() {
   const form = useForm<PackageFormInput>({
@@ -86,13 +87,21 @@ export default function FormCreatePackage() {
     createPackageHandler(body);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    form.setValue("thumbnail", file, { shouldValidate: true });
     if (file) {
-      const url = URL.createObjectURL(file);
-      setThumbnailPreview(url);
+      try {
+        const compressed = await compressImage(file);
+        form.setValue("thumbnail", compressed, { shouldValidate: true });
+        const url = URL.createObjectURL(compressed);
+        setThumbnailPreview(url);
+      } catch {
+        toast.error("Gagal memproses gambar");
+        form.setValue("thumbnail", null, { shouldValidate: true });
+        setThumbnailPreview(null);
+      }
     } else {
+      form.setValue("thumbnail", null, { shouldValidate: true });
       setThumbnailPreview(null);
     }
   };
@@ -196,7 +205,7 @@ export default function FormCreatePackage() {
                             Pilih Gambar
                           </span>
                           <span className="text-xs">
-                            JPG, JPEG, PNG, WEBP · Maks 2MB
+                            JPG, JPEG, PNG, WEBP
                           </span>
                         </button>
                       )}

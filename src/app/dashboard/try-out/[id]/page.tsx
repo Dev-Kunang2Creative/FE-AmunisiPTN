@@ -2,11 +2,26 @@
 
 import { useState, use } from "react";
 import Link from "next/link";
-import { ChevronLeft, FileText, Clock, Ticket, Upload, X, Instagram, ExternalLink } from "lucide-react";
+import {
+  ChevronLeft,
+  FileText,
+  Clock,
+  Ticket,
+  Upload,
+  X,
+  Instagram,
+  ExternalLink,
+} from "lucide-react";
+import { compressImage } from "@/utils/compress-image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useTickets } from "@/hooks/useTickets";
 import { useEnrollTryout } from "@/http/tryout/enroll-tryout";
 import { useGetUserTryoutDetail } from "@/http/tryout/get-user-tryout-detail";
@@ -14,7 +29,10 @@ import { useGetHistoryTryout } from "@/http/tryout/get-history-tryout";
 import { toast } from "sonner";
 import type { SubtestByTryout } from "@/types/subtest/subtest";
 import { getErrorMessage } from "@/utils/get-error-message";
-import { getTryoutButtonState, TRYOUT_BUTTON_CLASS } from "@/utils/tryout-button-state";
+import {
+  getTryoutButtonState,
+  TRYOUT_BUTTON_CLASS,
+} from "@/utils/tryout-button-state";
 
 interface TryoutSubtestSummary {
   name: string;
@@ -31,7 +49,11 @@ export default function TryoutDetailPage({
   const { id: tryoutId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session, status: sessionStatus, update: updateSession } = useSession();
+  const {
+    data: session,
+    status: sessionStatus,
+    update: updateSession,
+  } = useSession();
   const token = session?.access_token || "";
   const { ticketCount } = useTickets();
 
@@ -45,31 +67,48 @@ export default function TryoutDetailPage({
   });
 
   // Fetch enrolled tryouts as a fallback for user-specific status.
-  const { data: historyData, isLoading: historyLoading } = useGetHistoryTryout({ token });
+  const { data: historyData, isLoading: historyLoading } = useGetHistoryTryout({
+    token,
+  });
   const tryout = tryoutDetail?.data;
   const enrolledTryout = historyData?.data?.find((t) => t.id === tryoutId);
   const isEnrolled = Boolean(tryout?.user_is_enrolled) || !!enrolledTryout;
-  const attemptCount = Number(tryout?.user_attempt_count ?? enrolledTryout?.attemptCount ?? 0);
+  const attemptCount = Number(
+    tryout?.user_attempt_count ?? enrolledTryout?.attemptCount ?? 0,
+  );
   const hasAttempted =
     attemptCount > 0 ||
     Boolean(enrolledTryout?.hasAttempted) ||
-    (!!tryout?.user_session_status && tryout.user_session_status !== "not_started");
-  const isFinished = tryout?.user_session_status === "finished" || enrolledTryout?.status === "selesai";
-  const buttonState = getTryoutButtonState({ isEnrolled, hasAttempted });
-  const buttonShadowClass = buttonState.variant === "yellow"
-    ? "shadow-[0_4px_0_0_#a16207]"
-    : "shadow-[0_4px_0_0_#2b6a32]";
+    (!!tryout?.user_session_status &&
+      tryout.user_session_status !== "not_started");
+  const isFinished =
+    tryout?.user_session_status === "finished" ||
+    enrolledTryout?.status === "selesai";
+  const inProgress =
+    tryout?.user_session_status === "in_progress" ||
+    enrolledTryout?.status === "sedang dikerjakan";
+  const buttonState = getTryoutButtonState({
+    isEnrolled,
+    hasAttempted,
+    inProgress,
+  });
+  const buttonShadowClass =
+    buttonState.variant === "yellow"
+      ? "shadow-[0_4px_0_0_#a16207]"
+      : "shadow-[0_4px_0_0_#2b6a32]";
   const tryoutTitle = tryout?.title || "";
   const isFree = tryout?.is_free ?? true;
   const tryoutType = isFree ? "Gratis" : "Premium";
   const tryoutCategory = tryout?.category || "-";
 
   // Parse subtests from API data
-  const subtests: TryoutSubtestSummary[] = (tryout?.tryout_subtests || [])
-    .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
+  const subtests: TryoutSubtestSummary[] = [...(tryout?.tryout_subtests || [])]
+    .sort((a: SubtestByTryout, b: SubtestByTryout) => a.id.localeCompare(b.id))
     .map((ts: SubtestByTryout) => {
       const rawName = ts.subtest.name;
-      const displayName = rawName.includes("_") ? rawName.split("_").slice(1).join("_") : rawName;
+      const displayName = rawName.includes("_")
+        ? rawName.split("_").slice(1).join("_")
+        : rawName;
       return {
         name: displayName,
         questions: ts.subtest.max_questions || 0,
@@ -78,7 +117,7 @@ export default function TryoutDetailPage({
       };
     });
 
-  // Calculate totals  
+  // Calculate totals
   const tpsSubtests = subtests.filter((s) => s.category === "TPS");
   const litSubtests = subtests.filter((s) => s.category === "Literasi");
   const totalQuestions = subtests.reduce((sum, s) => sum + s.questions, 0);
@@ -96,10 +135,16 @@ export default function TryoutDetailPage({
         setShowEnrollDialog(false);
         setProofImages([]);
         setProofPreviews([]);
-        toast.success(isFree ? "Berhasil mendaftar tryout!" : "Tiket berhasil digunakan! Kamu terdaftar untuk tryout ini.");
+        toast.success(
+          isFree
+            ? "Berhasil mendaftar tryout!"
+            : "Tiket berhasil digunakan! Kamu terdaftar untuk tryout ini.",
+        );
         updateSession();
         queryClient.invalidateQueries({ queryKey: ["get-user-tryouts"] });
-        queryClient.invalidateQueries({ queryKey: ["get-user-tryout-detail", tryoutId] });
+        queryClient.invalidateQueries({
+          queryKey: ["get-user-tryout-detail", tryoutId],
+        });
         queryClient.invalidateQueries({ queryKey: ["get-history-tryout"] });
         router.push(`/dashboard/try-out/${tryoutId}/start`);
       },
@@ -122,7 +167,7 @@ export default function TryoutDetailPage({
   const MIN_PROOF_IMAGES = 2;
   const MAX_PROOF_IMAGES = 5;
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (!selectedFiles.length) return;
 
@@ -133,39 +178,51 @@ export default function TryoutDetailPage({
       return;
     }
 
-    const files = selectedFiles.slice(0, remainingSlots);
+    const rawFiles = selectedFiles.slice(0, remainingSlots);
     if (selectedFiles.length > remainingSlots) {
-      toast.warning(`Hanya ${remainingSlots} gambar yang ditambahkan. Maksimal ${MAX_PROOF_IMAGES} gambar.`);
+      toast.warning(
+        `Hanya ${remainingSlots} gambar yang ditambahkan. Maksimal ${MAX_PROOF_IMAGES} gambar.`,
+      );
     }
 
-    const invalidType = files.find((file) => !ALLOWED_TYPES.includes(file.type));
+    const invalidType = rawFiles.find(
+      (file) => !ALLOWED_TYPES.includes(file.type),
+    );
     if (invalidType) {
       toast.error("Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP.");
       e.target.value = "";
       return;
     }
 
-    const oversizedFile = files.find((file) => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
-    if (oversizedFile) {
-      toast.error(`Ukuran gambar melebihi batas ${MAX_FILE_SIZE_MB}MB.`);
-      e.target.value = "";
-      return;
-    }
+    const toastId = toast.loading("Memproses gambar...");
+    try {
+      const compressedFiles = await Promise.all(
+        rawFiles.map((file) => compressImage(file)),
+      );
 
-    setProofImages((current) => [...current, ...files]);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProofPreviews((current) => [...current, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
+      setProofImages((current) => [...current, ...compressedFiles]);
+      compressedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setProofPreviews((current) => [...current, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+      toast.dismiss(toastId);
+    } catch (error) {
+      toast.error("Gagal memproses gambar.");
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const removeProofImage = (index: number) => {
-    setProofImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
-    setProofPreviews((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setProofImages((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
+    setProofPreviews((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
   };
 
   if (sessionStatus === "loading" || isLoading || historyLoading) {
@@ -180,7 +237,10 @@ export default function TryoutDetailPage({
     return (
       <div className="w-full max-w-3xl mx-auto py-12 px-4 text-center">
         <p className="text-gray-500">Tryout tidak ditemukan.</p>
-        <Link href="/dashboard/try-out" className="text-[#004AAB] font-semibold mt-4 inline-block">
+        <Link
+          href="/dashboard/try-out"
+          className="text-[#004AAB] font-semibold mt-4 inline-block"
+        >
           ← Kembali
         </Link>
       </div>
@@ -191,7 +251,10 @@ export default function TryoutDetailPage({
     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-500 pb-12 bg-white min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-2 p-6 border-b border-gray-100 mb-6">
-        <Link href="/dashboard/try-out" className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-800">
+        <Link
+          href="/dashboard/try-out"
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-800"
+        >
           <ChevronLeft className="w-6 h-6" />
         </Link>
         <h1 className="text-xl font-bold text-gray-900">Detail Try Out</h1>
@@ -204,7 +267,9 @@ export default function TryoutDetailPage({
             <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-[#004AAB]">
               {tryoutCategory}
             </span>
-            <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${isFree ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+            <span
+              className={`px-4 py-1.5 rounded-full text-xs font-bold ${isFree ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}
+            >
               {tryoutType}
             </span>
           </div>
@@ -228,7 +293,9 @@ export default function TryoutDetailPage({
           {/* TPS */}
           {tpsSubtests.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-bold text-gray-900 text-lg">Tes Potensi Skolastik (TPS)</h4>
+              <h4 className="font-bold text-gray-900 text-lg">
+                Tes Potensi Skolastik (TPS)
+              </h4>
               <div className="text-sm text-gray-600 space-y-1">
                 <p>Jumlah Soal : {tpsQuestions} Soal</p>
                 <p>Durasi : {tpsDuration} menit</p>
@@ -237,14 +304,18 @@ export default function TryoutDetailPage({
                 <p className="text-sm text-gray-600 mb-2">Isi subtest :</p>
                 <ul className="text-sm text-gray-600 space-y-1.5">
                   {tpsSubtests.map((s) => (
-                    <li key={s.name}>• {s.name} : {s.questions} soal</li>
+                    <li key={s.name}>
+                      • {s.name} : {s.questions} soal
+                    </li>
                   ))}
                 </ul>
               </div>
             </div>
           )}
 
-          {tpsSubtests.length > 0 && litSubtests.length > 0 && <hr className="border-gray-100" />}
+          {tpsSubtests.length > 0 && litSubtests.length > 0 && (
+            <hr className="border-gray-100" />
+          )}
 
           {/* Literasi */}
           {litSubtests.length > 0 && (
@@ -258,7 +329,9 @@ export default function TryoutDetailPage({
                 <p className="text-sm text-gray-600 mb-2">Isi subtest :</p>
                 <ul className="text-sm text-gray-600 space-y-1.5">
                   {litSubtests.map((s) => (
-                    <li key={s.name}>• {s.name} : {s.questions} soal</li>
+                    <li key={s.name}>
+                      • {s.name} : {s.questions} soal
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -272,13 +345,17 @@ export default function TryoutDetailPage({
             buttonState.action === "retry_tryout" && isFinished ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => router.push(`/dashboard/try-out/${tryoutId}/start`)}
+                  onClick={() =>
+                    router.push(`/dashboard/try-out/${tryoutId}/start`)
+                  }
                   className={`w-full py-3.5 rounded-xl font-bold text-sm ${buttonShadowClass} active:shadow-none active:translate-y-1 transition-all ${TRYOUT_BUTTON_CLASS[buttonState.variant]}`}
                 >
                   {buttonState.label}
                 </button>
                 <button
-                  onClick={() => router.push(`/dashboard/try-out/${tryoutId}/result`)}
+                  onClick={() =>
+                    router.push(`/dashboard/try-out/${tryoutId}/result`)
+                  }
                   className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#004AAB] hover:bg-[#003B8A] text-white shadow-[0_4px_0_0_#002B66] active:shadow-none active:translate-y-1 transition-all"
                 >
                   Lihat Hasil Skor & Pembahasan
@@ -286,14 +363,16 @@ export default function TryoutDetailPage({
               </div>
             ) : (
               <button
-                onClick={() => router.push(`/dashboard/try-out/${tryoutId}/start`)}
+                onClick={() =>
+                  router.push(`/dashboard/try-out/${tryoutId}/start`)
+                }
                 className={`w-full py-3.5 rounded-xl font-bold text-sm ${buttonShadowClass} active:shadow-none active:translate-y-1 transition-all ${TRYOUT_BUTTON_CLASS[buttonState.variant]}`}
               >
                 {buttonState.label}
               </button>
             )
           ) : (
-            <button 
+            <button
               onClick={() => setShowEnrollDialog(true)}
               className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#004AAB] hover:bg-[#003B8A] text-white shadow-[0_4px_0_0_#002B66] active:shadow-none active:translate-y-1 transition-all"
             >
@@ -305,7 +384,10 @@ export default function TryoutDetailPage({
 
       {/* Enroll Dialog */}
       <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
-        <DialogContent showCloseButton={false} className="sm:max-w-md p-0 rounded-2xl overflow-hidden">
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-md p-0 rounded-2xl overflow-hidden"
+        >
           <div className="bg-[#004AAB] p-6 text-white text-center">
             <DialogTitle className="text-xl font-bold text-white">
               {isFree ? "Daftar Tryout Gratis" : "Gunakan Tiket"}
@@ -313,8 +395,7 @@ export default function TryoutDetailPage({
             <DialogDescription className="text-white/80 text-sm mt-1">
               {isFree
                 ? "Upload bukti follow Instagram untuk mendaftar"
-                : `Kamu akan menggunakan 1 tiket. Sisa tiket: ${ticketCount}`
-              }
+                : `Kamu akan menggunakan 1 tiket. Sisa tiket: ${ticketCount}`}
             </DialogDescription>
           </div>
 
@@ -322,9 +403,12 @@ export default function TryoutDetailPage({
             {isFree ? (
               <>
                 <div>
-                  <label className="font-semibold text-gray-800 text-sm mb-2 block">Bukti Follow Instagram</label>
+                  <label className="font-semibold text-gray-800 text-sm mb-2 block">
+                    Bukti Follow Instagram
+                  </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Follow kedua akun Instagram berikut, lalu upload minimal 2 foto bukti follow.
+                    Follow kedua akun Instagram berikut, lalu upload minimal 2
+                    foto bukti follow.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
@@ -352,8 +436,15 @@ export default function TryoutDetailPage({
                   {proofPreviews.length > 0 && (
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       {proofPreviews.map((preview, index) => (
-                        <div key={`${preview}-${index}`} className="relative rounded-xl overflow-hidden border-2 border-green-400">
-                          <img src={preview} alt={`Preview bukti follow ${index + 1}`} className="w-full h-32 object-cover" />
+                        <div
+                          key={`${preview}-${index}`}
+                          className="relative rounded-xl overflow-hidden border-2 border-green-400"
+                        >
+                          <img
+                            src={preview}
+                            alt={`Preview bukti follow ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                          />
                           <button
                             type="button"
                             onClick={() => removeProofImage(index)}
@@ -369,11 +460,16 @@ export default function TryoutDetailPage({
                   {proofImages.length < MAX_PROOF_IMAGES && (
                     <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-[#004AAB] transition-colors">
                       <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500 font-medium">Klik untuk upload bukti follow</span>
-                      <span className="text-xs text-gray-400 mt-1 text-center px-4">
-                        Minimal 2 foto bukti follow, maksimal {MAX_PROOF_IMAGES} foto
+                      <span className="text-sm text-gray-500 font-medium">
+                        Klik untuk upload bukti follow
                       </span>
-                      <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP, maks 2MB per foto</span>
+                      <span className="text-xs text-gray-400 mt-1 text-center px-4">
+                        Minimal 2 foto bukti follow, maksimal {MAX_PROOF_IMAGES}{" "}
+                        foto
+                      </span>
+                      <span className="text-xs text-gray-400 mt-1">
+                        JPG, PNG, WebP
+                      </span>
                       <input
                         type="file"
                         multiple
@@ -389,8 +485,12 @@ export default function TryoutDetailPage({
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
                 <Ticket className="w-6 h-6 text-amber-600 shrink-0" />
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">1 Tiket akan digunakan</p>
-                  <p className="text-xs text-gray-500">Sisa tiket kamu: <strong>{ticketCount}</strong></p>
+                  <p className="font-semibold text-gray-800 text-sm">
+                    1 Tiket akan digunakan
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Sisa tiket kamu: <strong>{ticketCount}</strong>
+                  </p>
                 </div>
               </div>
             )}
@@ -405,17 +505,17 @@ export default function TryoutDetailPage({
               <button
                 onClick={handleEnroll}
                 disabled={
-                  enrollMutation.isPending || 
-                  (isFree && proofImages.length < MIN_PROOF_IMAGES) || 
+                  enrollMutation.isPending ||
+                  (isFree && proofImages.length < MIN_PROOF_IMAGES) ||
                   (!isFree && (ticketCount || 0) < 1)
                 }
                 className="flex-1 bg-[#004AAB] hover:bg-[#003B8A] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50"
               >
-                {enrollMutation.isPending 
-                  ? "Memproses..." 
-                  : isFree 
-                    ? "Daftar Sekarang" 
-                    : (!isFree && (ticketCount || 0) < 1)
+                {enrollMutation.isPending
+                  ? "Memproses..."
+                  : isFree
+                    ? "Daftar Sekarang"
+                    : !isFree && (ticketCount || 0) < 1
                       ? "Tiket Tidak Cukup"
                       : "Gunakan Tiket"}
               </button>

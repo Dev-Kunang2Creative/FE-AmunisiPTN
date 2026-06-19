@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Radio, Calendar, Clock, Users } from "lucide-react";
 import Link from "next/link";
-import { getTryoutButtonState, TRYOUT_BUTTON_CLASS } from "@/utils/tryout-button-state";
+import {
+  getTryoutButtonState,
+  TRYOUT_BUTTON_CLASS,
+} from "@/utils/tryout-button-state";
 import { formatJakartaDate } from "@/utils/date-time";
 
 interface TryoutCardProps {
@@ -18,6 +21,7 @@ interface TryoutCardProps {
   participantsCount?: number;
   isEnrolled?: boolean;
   hasAttempted?: boolean;
+  inProgress?: boolean;
 }
 
 export default function TryoutCard({
@@ -31,13 +35,22 @@ export default function TryoutCard({
   participantsCount = 0,
   isEnrolled = false,
   hasAttempted = false,
+  inProgress = false,
 }: TryoutCardProps) {
-  const buttonState = getTryoutButtonState({ isEnrolled, hasAttempted });
-  const buttonHref = isEnrolled ? `/dashboard/try-out/${id}/start` : `/dashboard/try-out/${id}`;
+  const buttonState = getTryoutButtonState({
+    isEnrolled,
+    hasAttempted,
+    inProgress,
+  });
+  const buttonHref = isEnrolled
+    ? `/dashboard/try-out/${id}/start`
+    : `/dashboard/try-out/${id}`;
 
   const [statusText, setStatusText] = useState("Menghitung...");
   const [statusTheme, setStatusTheme] = useState("bg-gray-400"); // for the left tag
-  const [iconVariant, setIconVariant] = useState(<Radio className="w-3.5 h-3.5" />); // default icon
+  const [iconVariant, setIconVariant] = useState(
+    <Radio className="w-3.5 h-3.5" />,
+  ); // default icon
   const [countdownText, setCountdownText] = useState("");
   const [countdownTheme, setCountdownTheme] = useState("bg-gray-300"); // for the right tag
   const [dateRangeText, setDateRangeText] = useState("");
@@ -52,25 +65,32 @@ export default function TryoutCard({
       const phaseEnd = new Date(endDate).getTime();
 
       const formatDate = (date: Date) => {
-        return formatJakartaDate(date, { day: "2-digit", month: "long", year: "numeric" });
+        return formatJakartaDate(date, {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
       };
 
-      setDateRangeText(`${formatDate(new Date(phaseStart))} - ${formatDate(new Date(phaseEnd))}`);
+      setDateRangeText(
+        `${formatDate(new Date(phaseStart))} - ${formatDate(new Date(phaseEnd))}`,
+      );
 
       if (now >= phaseStart && now <= phaseEnd) {
         setStatusText("Berlangsung");
         setStatusTheme("bg-[#E54D4D]");
         setIconVariant(<Radio className="w-3.5 h-3.5" />);
         setCountdownTheme("bg-[#83CC75]");
-        
+
         // Calculate countdown to end of current phase
         const distance = phaseEnd - now;
         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const hours = Math.floor(
+          (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        );
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
         setCountdownText(`${days} hr, ${hours} j ${minutes} m, ${seconds} dtk`);
-        
       } else if (now < phaseStart) {
         setStatusText("Akan Datang");
         setStatusTheme("bg-[#F59E0B]"); // amber/orange
@@ -80,10 +100,14 @@ export default function TryoutCard({
         // Calculate countdown to start of phase
         const distance = phaseStart - now;
         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const hours = Math.floor(
+          (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        );
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        setCountdownText(`Mulai dlm ${days} hr, ${hours} j ${minutes} m, ${seconds} dtk`);
+        setCountdownText(
+          `Mulai dlm ${days} hr, ${hours} j ${minutes} m, ${seconds} dtk`,
+        );
       } else {
         setStatusText("Selesai");
         setStatusTheme("bg-[#6B7280]"); // gray
@@ -126,7 +150,9 @@ export default function TryoutCard({
           <span className="bg-blue-50 border border-blue-100 text-[#004AAB] text-xs px-3 py-1 rounded-full font-semibold">
             {category || "-"}
           </span>
-          <span className={`text-xs px-3 py-1 rounded-full font-semibold ${type === "Gratis" ? "bg-green-50 border border-green-100 text-green-700" : "bg-amber-50 border border-amber-100 text-amber-700"}`}>
+          <span
+            className={`text-xs px-3 py-1 rounded-full font-semibold ${type === "Gratis" ? "bg-green-50 border border-green-100 text-green-700" : "bg-amber-50 border border-amber-100 text-amber-700"}`}
+          >
             {type}
           </span>
         </div>
@@ -136,11 +162,15 @@ export default function TryoutCard({
 
         {/* Status Badges */}
         <div className="flex items-stretch gap-2 mb-4">
-          <div className={`${statusTheme} text-white flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium min-w-max`}>
+          <div
+            className={`${statusTheme} text-white flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium min-w-max`}
+          >
             {iconVariant}
             <span>{statusText}</span>
           </div>
-          <div className={`${countdownTheme} text-white flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-medium flex-1 text-center line-clamp-1`}>
+          <div
+            className={`${countdownTheme} text-white flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-medium flex-1 text-center line-clamp-1`}
+          >
             {countdownText || "Memuat..."}
           </div>
         </div>
