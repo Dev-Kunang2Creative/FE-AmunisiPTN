@@ -34,6 +34,7 @@ import { useUpdateQuestion } from "@/http/questions/update-question";
 import { useGetDetailQuestion } from "@/http/questions/get-detail-question";
 import { useSession } from "next-auth/react";
 import { stripHtmlToPreviewText } from "@/utils/rich-text";
+import { compressImage } from "@/utils/compress-image";
 
 interface FormEditQuestionProps {
   subtestId: string;
@@ -247,12 +248,20 @@ export default function FormEditQuestion({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] ?? null;
-                      field.onChange(file);
                       if (file) {
-                        form.setValue("delete_question_image", false);
-                        setQuestionPreview(URL.createObjectURL(file));
+                        try {
+                          const compressed = await compressImage(file);
+                          field.onChange(compressed);
+                          form.setValue("delete_question_image", false);
+                          setQuestionPreview(URL.createObjectURL(compressed));
+                        } catch {
+                          toast.error("Gagal memproses gambar soal");
+                          field.onChange(null);
+                        }
+                      } else {
+                        field.onChange(null);
                       }
                     }}
                   />
@@ -389,12 +398,20 @@ export default function FormEditQuestion({
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] ?? null;
-                      field.onChange(file);
                       if (file) {
-                        form.setValue("delete_discussion_image", false);
-                        setDiscussionPreview(URL.createObjectURL(file));
+                        try {
+                          const compressed = await compressImage(file);
+                          field.onChange(compressed);
+                          form.setValue("delete_discussion_image", false);
+                          setDiscussionPreview(URL.createObjectURL(compressed));
+                        } catch {
+                          toast.error("Gagal memproses gambar pembahasan");
+                          field.onChange(null);
+                        }
+                      } else {
+                        field.onChange(null);
                       }
                     }}
                   />
