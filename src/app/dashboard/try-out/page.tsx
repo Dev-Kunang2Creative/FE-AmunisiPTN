@@ -279,6 +279,11 @@ export default function TryoutPage() {
                     historyMap.get(item.id)?.hasAttempted ||
                     false
                   }
+                  inProgress={
+                    item.inProgress ||
+                    historyMap.get(item.id)?.status === "sedang dikerjakan" ||
+                    false
+                  }
                 />
               ))}
             </div>

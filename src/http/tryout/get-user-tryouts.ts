@@ -18,6 +18,7 @@ export interface UserTryoutData {
   participantsCount: number;
   isEnrolled: boolean;
   hasAttempted: boolean;
+  inProgress: boolean;
   attemptCount: number;
 }
 
@@ -37,7 +38,11 @@ function mapTryoutBEtoFE(tryout: Tryout): UserTryoutData {
     tryoutSubtests: tryout.tryout_subtests,
     participantsCount: tryout.user_accesses_count ?? 0,
     isEnrolled: Boolean(tryout.user_is_enrolled),
-    hasAttempted: attemptCount > 0 || (!!tryout.user_session_status && tryout.user_session_status !== "not_started"),
+    hasAttempted:
+      attemptCount > 0 ||
+      (!!tryout.user_session_status &&
+        tryout.user_session_status !== "not_started"),
+    inProgress: tryout.user_session_status === "in_progress",
     attemptCount,
   };
 }
@@ -46,14 +51,22 @@ export interface GetUserTryoutsResponse {
   data: UserTryoutData[];
 }
 
-export const GetUserTryoutsHandler = async (token: string): Promise<GetUserTryoutsResponse> => {
+export const GetUserTryoutsHandler = async (
+  token: string,
+): Promise<GetUserTryoutsResponse> => {
   const { data } = await api.get<{ data: Tryout[] }>("/tryouts", {
     headers: { Authorization: `Bearer ${token}` },
   });
   return { data: data.data.map(mapTryoutBEtoFE) };
 };
 
-export const useGetUserTryouts = ({ token, options }: { token: string; options?: Partial<UseQueryOptions<GetUserTryoutsResponse, AxiosError>> }) => {
+export const useGetUserTryouts = ({
+  token,
+  options,
+}: {
+  token: string;
+  options?: Partial<UseQueryOptions<GetUserTryoutsResponse, AxiosError>>;
+}) => {
   return useQuery({
     queryKey: ["get-user-tryouts"],
     queryFn: () => GetUserTryoutsHandler(token),

@@ -9,6 +9,7 @@ export interface TryoutButtonState {
 export interface GetTryoutButtonStateParams {
   isEnrolled: boolean;
   hasAttempted: boolean;
+  inProgress?: boolean;
 }
 
 /**
@@ -21,23 +22,33 @@ export interface GetTryoutButtonStateParams {
 export function getTryoutButtonState({
   isEnrolled,
   hasAttempted,
+  inProgress,
 }: GetTryoutButtonStateParams): TryoutButtonState {
   if (!isEnrolled) {
     return { label: "Daftar", variant: "default", action: "open_detail" };
   }
 
+  if (inProgress) {
+    return {
+      label: "Lanjut Kerjakan",
+      variant: "yellow",
+      action: "retry_tryout",
+    };
+  }
+
   if (!hasAttempted) {
-    return { label: "Mulai Kerjakan", variant: "green", action: "start_tryout" };
+    return {
+      label: "Mulai Kerjakan",
+      variant: "green",
+      action: "start_tryout",
+    };
   }
 
   return { label: "Kerjakan Ulang", variant: "yellow", action: "retry_tryout" };
 }
 
 export const TRYOUT_BUTTON_CLASS: Record<TryoutButtonVariant, string> = {
-  default:
-    "bg-[#004AAB] hover:bg-[#003B8A] text-white",
-  green:
-    "bg-green-600 hover:bg-green-700 text-white",
-  yellow:
-    "bg-yellow-500 hover:bg-yellow-600 text-white",
+  default: "bg-[#004AAB] hover:bg-[#003B8A] text-white",
+  green: "bg-green-600 hover:bg-green-700 text-white",
+  yellow: "bg-yellow-500 hover:bg-yellow-600 text-white",
 };
