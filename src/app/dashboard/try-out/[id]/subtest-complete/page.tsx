@@ -23,7 +23,7 @@ function SubtestCompleteContent({ tryoutId }: { tryoutId: string }) {
 
   const subtests = useMemo(() => {
     return [...(tryoutDetail?.data?.tryout_subtests || [])]
-      .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
+      .sort((a: SubtestByTryout, b: SubtestByTryout) => a.id.localeCompare(b.id))
       .map((ts: SubtestByTryout) => ({
         id: ts.id,
         name: ts.subtest.name.includes("_") ? ts.subtest.name.split("_").slice(1).join("_") : ts.subtest.name,

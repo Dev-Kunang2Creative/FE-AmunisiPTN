@@ -73,9 +73,8 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     if (!tryoutDetail?.data?.tryout_subtests) return [];
 
     return [...tryoutDetail.data.tryout_subtests]
-      .sort(
-        (a: SubtestByTryout, b: SubtestByTryout) =>
-          (a.order_no || 0) - (b.order_no || 0),
+      .sort((a: SubtestByTryout, b: SubtestByTryout) =>
+        a.id.localeCompare(b.id),
       )
       .map((ts: SubtestByTryout) => {
         const rawName = ts.subtest.name;
