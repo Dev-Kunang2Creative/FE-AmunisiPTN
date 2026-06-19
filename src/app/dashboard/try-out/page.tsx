@@ -35,7 +35,7 @@ export default function TryoutPage() {
   const [activeFilter, setActiveFilter] = useState("Semua Tryout");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Semua");
-  const [sortBy, setSortBy] = useState("status");
+  const [sortBy, setSortBy] = useState("newest");
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);

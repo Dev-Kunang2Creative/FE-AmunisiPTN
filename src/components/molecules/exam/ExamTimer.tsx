@@ -70,7 +70,6 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: ExamTimerProps
           : "bg-[#EBF4FF] text-[#004AAB] border-[#004AAB]/20"
       }`}
     >
-      <span>Sisa waktu</span>
       <span className="font-mono">
         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
       </span>

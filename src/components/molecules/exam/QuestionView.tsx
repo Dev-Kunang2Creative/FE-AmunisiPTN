@@ -78,7 +78,7 @@ export default function QuestionView({
 
         <RichTextRenderer
           html={question.question_text}
-          className="mb-6 text-gray-800 font-medium"
+          className="mb-6 text-gray-800 font-normal"
         />
 
         {isEssay ? (
@@ -228,7 +228,7 @@ export default function QuestionView({
         )}
       </div>
 
-      <div className="border-t border-gray-100 px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div className="sticky bottom-0 z-10 bg-white border-t border-gray-100 px-6 lg:px-8 py-4 flex items-center justify-between">
         <button
           onClick={onPrev}
           disabled={!hasPrev}
