@@ -267,11 +267,19 @@ export default function FormCreateQuestionBank() {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] ?? null;
-                      field.onChange(file);
                       if (file) {
-                        setQuestionPreview(URL.createObjectURL(file));
+                        try {
+                          const compressed = await compressImage(file);
+                          field.onChange(compressed);
+                          setQuestionPreview(URL.createObjectURL(compressed));
+                        } catch {
+                          toast.error("Gagal memproses gambar soal");
+                          field.onChange(null);
+                        }
+                      } else {
+                        field.onChange(null);
                       }
                     }}
                   />
@@ -411,11 +419,19 @@ export default function FormCreateQuestionBank() {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] ?? null;
-                      field.onChange(file);
                       if (file) {
-                        setDiscussionPreview(URL.createObjectURL(file));
+                        try {
+                          const compressed = await compressImage(file);
+                          field.onChange(compressed);
+                          setDiscussionPreview(URL.createObjectURL(compressed));
+                        } catch {
+                          toast.error("Gagal memproses gambar pembahasan");
+                          field.onChange(null);
+                        }
+                      } else {
+                        field.onChange(null);
                       }
                     }}
                   />
