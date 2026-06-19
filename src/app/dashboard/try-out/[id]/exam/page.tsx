@@ -347,10 +347,10 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
       <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-200 bg-white">
         <button
           onClick={handleExitExam}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors min-w-0 flex-1 mr-4"
         >
-          <X className="w-5 h-5" />
-          <span className="font-bold text-sm hidden sm:inline">
+          <X className="w-5 h-5 shrink-0" />
+          <span className="font-bold text-xs sm:text-sm leading-tight text-left">
             {tryoutDetail?.data?.title || "Judul Try Out"}
           </span>
         </button>
