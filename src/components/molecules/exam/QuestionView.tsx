@@ -118,10 +118,11 @@ export default function QuestionView({
           </div>
         )}
 
-        <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
+        <div>
           <RichTextRenderer
             html={question.question_text}
             className="mb-6 text-gray-800 font-normal"
+            style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}
           />
         </div>
 
@@ -136,6 +137,7 @@ export default function QuestionView({
                   <RichTextRenderer
                     html={selectedAnswer}
                     className="text-gray-800"
+                    style={{ fontSize: `${fontSize}px` }}
                   />
                 ) : (
                   <p className="text-sm text-gray-500">Tidak ada jawaban.</p>
@@ -211,6 +213,7 @@ export default function QuestionView({
                     <RichTextRenderer
                       html={option.option_text}
                       className={`pt-1 ${textClass}`}
+                      style={{ fontSize: `${fontSize}px` }}
                     />
                     {isReviewMode && (isCorrectAnswer || isUserWrongAnswer) && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -249,7 +252,8 @@ export default function QuestionView({
             {question.discussion ? (
               <RichTextRenderer
                 html={question.discussion}
-                className="text-gray-700"
+                className="text-gray-800"
+                style={{ fontSize: `${fontSize}px` }}
               />
             ) : (
               <p className="text-sm leading-relaxed text-gray-600">
