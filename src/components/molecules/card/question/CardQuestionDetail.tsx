@@ -1,8 +1,7 @@
-﻿import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Question } from "@/types/questions/question";
-import Image from "next/image";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import RichTextRenderer from "@/components/atoms/rich-text/RichTextRenderer";
@@ -117,12 +116,10 @@ export default function CardQuestionDetail({
             <span className="font-medium text-muted-foreground uppercase tracking-widest">
               Gambar Pertanyaan
             </span>
-            <Image
+            <img
               src={data.question_image_url}
               alt="Gambar Pertanyaan"
               className="rounded-lg max-w-xs max-h-60 object-contain border border-border"
-              width={780}
-              height={400}
             />
           </div>
         )}
@@ -194,12 +191,10 @@ export default function CardQuestionDetail({
             <span className="font-medium text-muted-foreground uppercase tracking-widest">
               Gambar Pembahasan
             </span>
-            <Image
+            <img
               src={data.discussion_image_url}
               alt="Gambar Pembahasan"
               className="rounded-lg max-w-xs max-h-60 object-contain border border-border"
-              width={780}
-              height={400}
             />
           </div>
         )}
