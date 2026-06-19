@@ -8,6 +8,8 @@ import {
   getReviewOptionState,
   type TryoutLayoutMode,
 } from "@/utils/tryout-review";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 interface QuestionViewProps {
   question: ExamQuestion;
@@ -109,11 +111,13 @@ export default function QuestionView({
         {question.question_image_url && (
           <div className="mb-6 flex justify-center">
             <div className="relative max-w-full max-h-75 w-auto">
-              <img
-                src={question.question_image_url}
-                alt="Soal"
-                className="max-h-75 w-auto object-contain rounded-lg"
-              />
+              <Zoom>
+                <img
+                  src={question.question_image_url}
+                  alt="Soal"
+                  className="max-h-75 w-auto object-contain rounded-lg"
+                />
+              </Zoom>
             </div>
           </div>
         )}
@@ -261,11 +265,13 @@ export default function QuestionView({
               </p>
             )}
             {question.discussion_image_url && (
-              <img
-                src={question.discussion_image_url}
-                alt="Pembahasan"
-                className="mt-4 max-h-[240px] rounded-lg object-contain"
-              />
+              <Zoom>
+                <img
+                  src={question.discussion_image_url}
+                  alt="Pembahasan"
+                  className="mt-4 max-h-[240px] rounded-lg object-contain"
+                />
+              </Zoom>
             )}
             {!isEssay && !question.correct_answer && (
               <p className="mt-3 text-xs font-medium text-amber-700">
