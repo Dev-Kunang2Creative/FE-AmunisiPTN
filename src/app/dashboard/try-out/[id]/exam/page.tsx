@@ -73,7 +73,10 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     if (!tryoutDetail?.data?.tryout_subtests) return [];
 
     return [...tryoutDetail.data.tryout_subtests]
-      .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
+      .sort(
+        (a: SubtestByTryout, b: SubtestByTryout) =>
+          (a.order_no || 0) - (b.order_no || 0),
+      )
       .map((ts: SubtestByTryout) => {
         const rawName = ts.subtest.name;
         const displayName = rawName.includes("_")
@@ -203,7 +206,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     options: {
       onError: (error: unknown) => {
         console.error("Failed to submit answer:", error);
-        
+
         const axiosError = error as AxiosError<{ message?: string }>;
         if (
           axiosError.response?.status === 422 &&
@@ -212,9 +215,11 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
           toast.error("Waktu subtest sudah habis!");
           autoSubmitRef.current();
         } else {
-          toast.error("Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.");
+          toast.error(
+            "Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.",
+          );
         }
-      }
+      },
     },
   });
 

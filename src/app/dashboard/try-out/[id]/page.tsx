@@ -102,8 +102,11 @@ export default function TryoutDetailPage({
   const tryoutCategory = tryout?.category || "-";
 
   // Parse subtests from API data
-  const subtests: TryoutSubtestSummary[] = (tryout?.tryout_subtests || [])
-    .sort((a: SubtestByTryout, b: SubtestByTryout) => a.order_no - b.order_no)
+  const subtests: TryoutSubtestSummary[] = [...(tryout?.tryout_subtests || [])]
+    .sort(
+      (a: SubtestByTryout, b: SubtestByTryout) =>
+        (a.order_no || 0) - (b.order_no || 0),
+    )
     .map((ts: SubtestByTryout) => {
       const rawName = ts.subtest.name;
       const displayName = rawName.includes("_")
