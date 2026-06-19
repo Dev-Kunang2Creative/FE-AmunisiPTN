@@ -203,7 +203,17 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     options: {
       onError: (error: unknown) => {
         console.error("Failed to submit answer:", error);
-        toast.error("Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.");
+        
+        const axiosError = error as AxiosError<{ message?: string }>;
+        if (
+          axiosError.response?.status === 422 &&
+          axiosError.response?.data?.message?.toLowerCase().includes("waktu")
+        ) {
+          toast.error("Waktu subtest sudah habis!");
+          autoSubmitRef.current();
+        } else {
+          toast.error("Gagal menyimpan jawaban. Periksa koneksi internet Anda lalu klik ulang opsi jawaban.");
+        }
       }
     },
   });
