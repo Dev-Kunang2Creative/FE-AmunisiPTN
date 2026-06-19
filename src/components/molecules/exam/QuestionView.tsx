@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ExamQuestion } from "@/types/exam/exam";
 import RichTextRenderer from "@/components/atoms/rich-text/RichTextRenderer";
 import RichTextEditor from "@/components/atoms/rich-text/RichTextEditor";
@@ -19,6 +19,9 @@ interface QuestionViewProps {
   hasPrev: boolean;
   hasNext: boolean;
   mode?: TryoutLayoutMode;
+  currentNumber: number;
+  totalQuestions: number;
+  subtestName: string;
 }
 
 export default function QuestionView({
@@ -31,10 +34,32 @@ export default function QuestionView({
   hasPrev,
   hasNext,
   mode = "attempt",
+  currentNumber,
+  totalQuestions,
+  subtestName,
 }: QuestionViewProps) {
   const isReviewMode = mode === "review" || mode === "admin-review";
   const isEssay = question.question_type === "essay";
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [fontSize, setFontSize] = useState(16);
+  const increaseFontSize = () => setFontSize(prev => Math.min(prev + 2, 24));
+  const decreaseFontSize = () => setFontSize(prev => Math.max(prev - 2, 12));
+
+  const getSubtestLabel = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("penalaran umum (induktif)")) return "PUI";
+    if (n.includes("penalaran umum (deduktif)")) return "PUD";
+    if (n.includes("penalaran kuantitatif") && n.includes("penalaran umum")) return "PUK";
+    if (n.includes("pengetahuan dan pemahaman umum")) return "PPU";
+    if (n.includes("pemahaman bacaan dan menulis")) return "PBM";
+    if (n.includes("pengetahuan kuantitatif")) return "PK";
+    if (n.includes("literasi bahasa indonesia") || n.includes("literasi dalam bahasa indonesia")) return "LBI";
+    if (n.includes("literasi bahasa inggris") || n.includes("literasi dalam bahasa inggris")) return "LBE";
+    if (n.includes("penalaran matematika")) return "PM";
+    if (n.includes("wawasan kebangsaan")) return "WB";
+    return name.substring(0, 3).toUpperCase();
+  };
 
   useEffect(() => {
     return () => {
@@ -64,6 +89,22 @@ export default function QuestionView({
   return (
     <div className="flex flex-col lg:flex-1 lg:min-h-0">
       <div className="p-6 lg:p-8 lg:flex-1 lg:overflow-y-auto">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+              {getSubtestLabel(subtestName)}
+            </span>
+            <span className="text-sm text-gray-600">
+              Soal <strong className="text-gray-900">{currentNumber}</strong> dari <strong className="text-gray-900">{totalQuestions}</strong>
+            </span>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-1 bg-white border border-gray-200 rounded-full text-sm font-semibold shadow-sm">
+            <button onClick={decreaseFontSize} className="hover:text-[#004AAB] transition-colors px-1">-</button>
+            <span className="w-5 text-center">{fontSize}</span>
+            <button onClick={increaseFontSize} className="hover:text-[#004AAB] transition-colors px-1">+</button>
+          </div>
+        </div>
+
         {question.question_image_url && (
           <div className="mb-6 flex justify-center">
             <div className="relative max-w-full max-h-75 w-auto">
@@ -76,10 +117,12 @@ export default function QuestionView({
           </div>
         )}
 
-        <RichTextRenderer
-          html={question.question_text}
-          className="mb-6 text-gray-800 font-normal"
-        />
+        <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }}>
+          <RichTextRenderer
+            html={question.question_text}
+            className="mb-6 text-gray-800 font-normal"
+          />
+        </div>
 
         {isEssay ? (
           <div className="space-y-4">

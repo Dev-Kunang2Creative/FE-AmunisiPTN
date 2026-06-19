@@ -344,12 +344,6 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
             {tryoutDetail?.data?.title || "Judul Try Out"}
           </span>
         </button>
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Nomor Soal</p>
-          <p className="font-bold text-lg text-gray-900">
-            {currentQuestionIndex + 1}
-          </p>
-        </div>
         <ExamTimer remainingSeconds={timerSeconds} onTimeUp={handleTimeUp} />
       </header>
 
@@ -386,6 +380,9 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
           onFinish={handleFinishSubtest}
           hasPrev={currentQuestionIndex > 0}
           hasNext={currentQuestionIndex < questions.length - 1}
+          currentNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+          subtestName={currentSubtest.name}
         />
       </div>
 

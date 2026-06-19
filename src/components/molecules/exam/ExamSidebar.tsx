@@ -104,13 +104,6 @@ export default function ExamSidebar({
 
   return (
     <div className="w-full lg:w-65 shrink-0 flex flex-col gap-4">
-      <div className="bg-[#002B66] text-white rounded-xl p-4 text-center">
-        <p className="text-sm font-medium opacity-80">Subtest:</p>
-        <h3 className="font-bold text-base whitespace-pre-line">
-          {subtestName}
-        </h3>
-      </div>
-
       <button
         onClick={() => setIsMobileNavOpen(true)}
         className="lg:hidden w-full bg-[#EBF4FF] text-[#004AAB] py-3 rounded-xl font-bold text-sm border border-[#004AAB]/20 flex items-center justify-center gap-2 transition-colors hover:bg-[#D6E8FF]"
