@@ -50,7 +50,7 @@ export default function QuestionView({
     const n = name.toLowerCase();
     if (n.includes("penalaran umum (induktif)")) return "PUI";
     if (n.includes("penalaran umum (deduktif)")) return "PUD";
-    if (n.includes("penalaran kuantitatif") && n.includes("penalaran umum")) return "PUK";
+    if (n.includes("penalaran umum kuantitatif") || n.includes("penalaran umum (kuantitatif)")) return "PUK";
     if (n.includes("pengetahuan dan pemahaman umum")) return "PPU";
     if (n.includes("pemahaman bacaan dan menulis")) return "PBM";
     if (n.includes("pengetahuan kuantitatif")) return "PK";
@@ -58,6 +58,7 @@ export default function QuestionView({
     if (n.includes("literasi bahasa inggris") || n.includes("literasi dalam bahasa inggris")) return "LBE";
     if (n.includes("penalaran matematika")) return "PM";
     if (n.includes("wawasan kebangsaan")) return "WB";
+    if (n.includes("penalaran umum")) return "PU";
     return name.substring(0, 3).toUpperCase();
   };
 
