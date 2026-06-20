@@ -19,29 +19,62 @@ import { useGetDetailSubtest } from "@/http/subtest/get-detail-subtest";
 import { Question } from "@/types/questions/question";
 import { useQueryClient } from "@tanstack/react-query";
 import DialogBulkImportQuestion from "@/components/molecules/dialog/DialogBulkImportQuestion";
-import { FileSpreadsheet, Plus } from "lucide-react";
+import { FileSpreadsheet, ImageUp, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { stripHtmlToPreviewText } from "@/utils/rich-text";
+import DialogUpdateQuestionImages from "@/components/molecules/dialog/DialogUpdateQuestionImages";
 
 const questionExportColumns: AdminExportColumn<Question>[] = [
   { header: "Urutan", accessor: (row) => row.order_no },
-  { header: "Pertanyaan", accessor: (row) => stripHtmlToPreviewText(row.question_text) },
+  {
+    header: "Pertanyaan",
+    accessor: (row) => stripHtmlToPreviewText(row.question_text),
+  },
   { header: "Jawaban Benar", accessor: (row) => row.correct_answer },
   { header: "Tingkat", accessor: (row) => row.difficulty || "-" },
-  { header: "Status", accessor: (row) => (row.is_active ? "Aktif" : "Tidak Aktif") },
+  {
+    header: "Status",
+    accessor: (row) => (row.is_active ? "Aktif" : "Tidak Aktif"),
+  },
   { header: "Riwayat Jawaban", accessor: (row) => row.user_answers_count ?? 0 },
-  { header: "Tanggal Dibuat", accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID") },
+  {
+    header: "Tanggal Dibuat",
+    accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID"),
+  },
 ];
 
 const questionSortOptions: AdminSortOption<Question>[] = [
-  { key: "order-asc", label: "Urutan terkecil", compare: (a, b) => Number(a.order_no || 0) - Number(b.order_no || 0) },
-  { key: "order-desc", label: "Urutan terbesar", compare: (a, b) => Number(b.order_no || 0) - Number(a.order_no || 0) },
-  { key: "newest", label: "Terbaru", compare: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
-  { key: "oldest", label: "Terlama", compare: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
-  { key: "answered", label: "Riwayat terbanyak", compare: (a, b) => (b.user_answers_count ?? 0) - (a.user_answers_count ?? 0) },
+  {
+    key: "order-asc",
+    label: "Urutan terkecil",
+    compare: (a, b) => Number(a.order_no || 0) - Number(b.order_no || 0),
+  },
+  {
+    key: "order-desc",
+    label: "Urutan terbesar",
+    compare: (a, b) => Number(b.order_no || 0) - Number(a.order_no || 0),
+  },
+  {
+    key: "newest",
+    label: "Terbaru",
+    compare: (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  },
+  {
+    key: "oldest",
+    label: "Terlama",
+    compare: (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  },
+  {
+    key: "answered",
+    label: "Riwayat terbanyak",
+    compare: (a, b) =>
+      (b.user_answers_count ?? 0) - (a.user_answers_count ?? 0),
+  },
 ];
 
 interface DashboardadminSubtestDetailWrapperProps {
@@ -58,6 +91,7 @@ export default function DashboardadminSubtestDetailWrapper({
   const [isSelectedDeleteQuestion, setIsSelectedDeleteQuestion] =
     useState<Question | null>(null);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isUpdateImagesOpen, setIsUpdateImagesOpen] = useState(false);
 
   const deleteQuestionHandler = (data: Question) => {
     setIsSelectedDeleteQuestion(data);
@@ -100,7 +134,8 @@ export default function DashboardadminSubtestDetailWrapper({
         { label: "Belum dipakai", value: "unused" },
         { label: "Sudah ada riwayat", value: "used" },
       ],
-      getValue: (row) => ((row.user_answers_count ?? 0) > 0 ? "used" : "unused"),
+      getValue: (row) =>
+        (row.user_answers_count ?? 0) > 0 ? "used" : "unused",
     },
   ];
   const controls = useAdminTableControls({
@@ -115,26 +150,27 @@ export default function DashboardadminSubtestDetailWrapper({
     defaultSort: "order-asc",
   });
 
-  const { mutate: deleteQuestion, isPending: isDeletingQuestion } = useDeleteQuestion({
-    onError: (error) => {
-      toast.error("Gagal menghapus soal!", {
-        description:
-          error.response?.data.message ||
-          "Terjadi kesalahan saat menghapus soal.",
-      });
-    },
-    onSuccess: () => {
-      setIsSelectedDeleteQuestion(null);
-      setIsOpenDialogDelete(false);
-      toast.success("Berhasil menghapus soal!");
-      queryClient.invalidateQueries({
-        queryKey: ["get-all-question-by-subtest", id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["get-detail-subtest", id],
-      });
-    },
-  });
+  const { mutate: deleteQuestion, isPending: isDeletingQuestion } =
+    useDeleteQuestion({
+      onError: (error) => {
+        toast.error("Gagal menghapus soal!", {
+          description:
+            error.response?.data.message ||
+            "Terjadi kesalahan saat menghapus soal.",
+        });
+      },
+      onSuccess: () => {
+        setIsSelectedDeleteQuestion(null);
+        setIsOpenDialogDelete(false);
+        toast.success("Berhasil menghapus soal!");
+        queryClient.invalidateQueries({
+          queryKey: ["get-all-question-by-subtest", id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["get-detail-subtest", id],
+        });
+      },
+    });
 
   const handleDeleteQuestion = () => {
     if (isSelectedDeleteQuestion) {
@@ -167,15 +203,22 @@ export default function DashboardadminSubtestDetailWrapper({
             <div className="flex flex-col gap-2">
               <span className="text-sm text-gray-500">Maks. Soal</span>
               <h3 className="font-semibold">
-                {data?.data.max_questions === 0 ? "Tidak terbatas" : data?.data.max_questions}
+                {data?.data.max_questions === 0
+                  ? "Tidak terbatas"
+                  : data?.data.max_questions}
               </h3>
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-sm text-gray-500">Jumlah Soal</span>
               <h3 className="font-semibold">
-                <span className="text-blue-600">{data?.data.questions_count ?? 0}</span>
+                <span className="text-blue-600">
+                  {data?.data.questions_count ?? 0}
+                </span>
                 {data?.data.max_questions && data.data.max_questions > 0 && (
-                  <span className="text-gray-400 font-normal"> / {data.data.max_questions}</span>
+                  <span className="text-gray-400 font-normal">
+                    {" "}
+                    / {data.data.max_questions}
+                  </span>
                 )}
               </h3>
             </div>
@@ -202,20 +245,29 @@ export default function DashboardadminSubtestDetailWrapper({
               exportTitle={`laporan-soal-${data?.data.name ?? id}`}
               filterSummary={`Subtes: ${data?.data.name ?? "-"}; hasil: ${controls.rows.length}`}
             >
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setIsBulkImportOpen(true)}
-                  className="border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Import Excel
-                </Button>
-                <Button asChild size={"lg"}>
-                  <Link href={`/dashboard/admin/subtest/${id}/create`}>
-                    <Plus /> Tambah Pertanyaan
-                  </Link>
-                </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsBulkImportOpen(true)}
+                className="border-green-200 text-green-700 hover:bg-green-50"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Import Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsUpdateImagesOpen(true)}
+                className="border-amber-200 text-amber-700 hover:bg-amber-50"
+              >
+                <ImageUp className="w-4 h-4 mr-2" />
+                Perbaiki Gambar
+              </Button>
+              <Button asChild size={"lg"}>
+                <Link href={`/dashboard/admin/subtest/${id}/create`}>
+                  <Plus /> Tambah Pertanyaan
+                </Link>
+              </Button>
             </AdminDataToolbar>
             <DataTable
               columns={questionColumns({
@@ -242,6 +294,12 @@ export default function DashboardadminSubtestDetailWrapper({
       <DialogBulkImportQuestion
         open={isBulkImportOpen}
         onOpenChange={setIsBulkImportOpen}
+        subtestId={id}
+      />
+
+      <DialogUpdateQuestionImages
+        open={isUpdateImagesOpen}
+        onOpenChange={setIsUpdateImagesOpen}
         subtestId={id}
       />
     </section>
