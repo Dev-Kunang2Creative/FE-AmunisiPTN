@@ -5,9 +5,10 @@ import { api } from "@/lib/axios";
 export interface InjectVipTicketsPayload {
   amount: number;
   description: string;
-  filter_type: "all_vip" | "date_range";
+  filter_type: "all_vip" | "date_range" | "single_user";
   start_date?: string;
   end_date?: string;
+  user_id?: string;
 }
 
 export interface InjectVipTicketsResponse {

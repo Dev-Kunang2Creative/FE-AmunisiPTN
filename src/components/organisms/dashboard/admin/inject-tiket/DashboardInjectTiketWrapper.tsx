@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Ticket } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ticket, Gift } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -36,26 +36,6 @@ import {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 40, 100];
 
-const vipUserColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: "name",
-    header: "Nama",
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-  },
-  {
-    accessorKey: "ticket_balance",
-    header: "Saldo Tiket",
-  },
-  {
-    accessorKey: "created_at",
-    header: "Tanggal Daftar",
-    cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString("id-ID"),
-  },
-];
-
 export default function DashboardInjectTiketWrapper() {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -72,11 +52,18 @@ export default function DashboardInjectTiketWrapper() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Inject Form State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Bulk Inject Form State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [amount, setAmount] = useState(1);
   const [description, setDescription] = useState("Kompensasi Kendala Teknis");
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false);
+
+  // Single Inject Form State
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
+  const [singleAmount, setSingleAmount] = useState(1);
+  const [singleDescription, setSingleDescription] = useState("Kompensasi Khusus");
+  const [isSingleConfirmOpen, setIsSingleConfirmOpen] = useState(false);
 
   // Fetch VIP Users
   const { data, isPending } = useGetVipUsers({
@@ -97,18 +84,58 @@ export default function DashboardInjectTiketWrapper() {
     options: {
       onSuccess: (res) => {
         toast.success(res.message);
-        setIsConfirmOpen(false);
-        setIsModalOpen(false);
+        setIsBulkConfirmOpen(false);
+        setIsBulkModalOpen(false);
+        setIsSingleConfirmOpen(false);
+        setIsSingleModalOpen(false);
+        setSelectedUser(null);
         queryClient.invalidateQueries({ queryKey: ["get-vip-users"] });
       },
       onError: (err: any) => {
         toast.error("Gagal melakukan injeksi tiket", {
           description: err.response?.data?.message || err.message,
         });
-        setIsConfirmOpen(false);
+        setIsBulkConfirmOpen(false);
+        setIsSingleConfirmOpen(false);
       },
     },
   });
+
+  const vipUserColumns: ColumnDef<User>[] = [
+    {
+      accessorKey: "name",
+      header: "Nama",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "ticket_balance",
+      header: "Saldo Tiket",
+    },
+    {
+      accessorKey: "created_at",
+      header: "Tanggal Daftar",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString("id-ID"),
+    },
+    {
+      id: "actions",
+      header: "Aksi",
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          onClick={() => {
+            setSelectedUser(row.original);
+            setIsSingleModalOpen(true);
+          }}
+          className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          Inject
+        </Button>
+      ),
+    },
+  ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,24 +145,33 @@ export default function DashboardInjectTiketWrapper() {
 
   const handleFilterChange = () => {
     setPage(1);
-    // React Query will auto-refetch when state changes
   };
 
-  const handleInjectClick = () => {
+  const handleBulkInjectClick = () => {
     if (filterType === "date_range" && (!startDate || !endDate)) {
       toast.error("Silakan lengkapi filter tanggal terlebih dahulu untuk preview tabel.");
       return;
     }
-    setIsModalOpen(true);
+    setIsBulkModalOpen(true);
   };
 
-  const handleExecute = () => {
+  const handleBulkExecute = () => {
     injectMutation.mutate({
       amount,
       description,
       filter_type: filterType,
       start_date: filterType === "date_range" ? startDate : undefined,
       end_date: filterType === "date_range" ? endDate : undefined,
+    });
+  };
+
+  const handleSingleExecute = () => {
+    if (!selectedUser) return;
+    injectMutation.mutate({
+      amount: singleAmount,
+      description: singleDescription,
+      filter_type: "single_user",
+      user_id: selectedUser.id,
     });
   };
 
@@ -199,9 +235,9 @@ export default function DashboardInjectTiketWrapper() {
                 )}
               </div>
 
-              <Button onClick={handleInjectClick} className="gap-2 shrink-0 bg-primary">
+              <Button onClick={handleBulkInjectClick} className="gap-2 shrink-0 bg-primary">
                 <Ticket className="w-4 h-4" />
-                Inject Tiket
+                Inject Tiket Massal
               </Button>
             </div>
 
@@ -257,11 +293,11 @@ export default function DashboardInjectTiketWrapper() {
         </CardContent>
       </Card>
 
-      {/* Modal Input Form */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* Modal Bulk Input Form */}
+      <Dialog open={isBulkModalOpen} onOpenChange={setIsBulkModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Formulir Eksekusi Injeksi Tiket</DialogTitle>
+            <DialogTitle>Formulir Eksekusi Injeksi Tiket Massal</DialogTitle>
             <DialogDescription>
               Anda akan memberikan tiket kepada total <strong>{data?.total || 0} pengguna VIP</strong> yang tampil di tabel (sesuai filter).
             </DialogDescription>
@@ -288,19 +324,19 @@ export default function DashboardInjectTiketWrapper() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
-            <Button onClick={() => { setIsModalOpen(false); setIsConfirmOpen(true); }}>
+            <Button variant="outline" onClick={() => setIsBulkModalOpen(false)}>Batal</Button>
+            <Button onClick={() => { setIsBulkModalOpen(false); setIsBulkConfirmOpen(true); }}>
               Lanjut Eksekusi
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Confirmation */}
-      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+      {/* Modal Bulk Confirmation */}
+      <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Akhir Injeksi Tiket</AlertDialogTitle>
+            <AlertDialogTitle>Konfirmasi Akhir Injeksi Massal</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
                 Anda akan memberikan <strong>{amount} tiket</strong> gratis dengan pesan:{" "}
@@ -319,12 +355,79 @@ export default function DashboardInjectTiketWrapper() {
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                handleExecute();
+                handleBulkExecute();
               }}
               disabled={injectMutation.isPending}
               className="bg-primary"
             >
-              {injectMutation.isPending ? "Sedang Mengeksekusi..." : "Ya, Injeksi Tiket!"}
+              {injectMutation.isPending ? "Sedang Mengeksekusi..." : "Ya, Injeksi Massal!"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal Single Input Form */}
+      <Dialog open={isSingleModalOpen} onOpenChange={setIsSingleModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Beri Tiket Spesial</DialogTitle>
+            <DialogDescription>
+              Berikan tiket tambahan khusus untuk <strong>{selectedUser?.name}</strong> ({selectedUser?.email}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Jumlah Tiket</Label>
+              <Input
+                type="number"
+                min={1}
+                value={singleAmount}
+                onChange={(e) => setSingleAmount(Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Pesan Log Khusus</Label>
+              <Input
+                type="text"
+                placeholder="Contoh: Kompensasi Khusus"
+                value={singleDescription}
+                onChange={(e) => setSingleDescription(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSingleModalOpen(false)}>Batal</Button>
+            <Button onClick={() => { setIsSingleModalOpen(false); setIsSingleConfirmOpen(true); }}>
+              Lanjut Eksekusi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Single Confirmation */}
+      <AlertDialog open={isSingleConfirmOpen} onOpenChange={setIsSingleConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Pemberian Tiket</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Berikan <strong>{singleAmount} tiket</strong> kepada <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
+                <span className="italic">"{singleDescription}"</span>?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={injectMutation.isPending}>Kembali</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleSingleExecute();
+              }}
+              disabled={injectMutation.isPending}
+              className="bg-primary"
+            >
+              {injectMutation.isPending ? "Mengeksekusi..." : "Berikan Tiket"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
