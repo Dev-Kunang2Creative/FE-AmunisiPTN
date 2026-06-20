@@ -124,7 +124,7 @@ export default function DialogUpdateQuestionImages({
                 dst.
               </li>
               <li>
-                Gunakan file Excel yang <b>urutan & jumlah barisnya sama</b>{" "}
+                Gunakan file Excel yang <b>urutan &amp; jumlah barisnya sama</b>{" "}
                 dengan soal yang ada.
               </li>
               <li>
@@ -195,7 +195,7 @@ export default function DialogUpdateQuestionImages({
               <div className="flex flex-col items-center gap-2 text-gray-500">
                 <Upload className="w-8 h-8 text-gray-400" />
                 <p className="text-sm font-medium">
-                  Drag & drop file .xlsx di sini atau klik untuk pilih
+                  Drag &amp; drop file .xlsx di sini atau klik untuk pilih
                 </p>
                 <p className="text-xs text-gray-400">
                   Format: .xlsx — Maks 10 MB

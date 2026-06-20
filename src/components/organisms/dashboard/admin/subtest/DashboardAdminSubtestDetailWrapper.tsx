@@ -19,13 +19,13 @@ import { useGetDetailSubtest } from "@/http/subtest/get-detail-subtest";
 import { Question } from "@/types/questions/question";
 import { useQueryClient } from "@tanstack/react-query";
 import DialogBulkImportQuestion from "@/components/molecules/dialog/DialogBulkImportQuestion";
+import DialogUpdateQuestionImages from "@/components/molecules/dialog/DialogUpdateQuestionImages";
 import { FileSpreadsheet, ImageUp, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { stripHtmlToPreviewText } from "@/utils/rich-text";
-import DialogUpdateQuestionImages from "@/components/molecules/dialog/DialogUpdateQuestionImages";
 
 const questionExportColumns: AdminExportColumn<Question>[] = [
   { header: "Urutan", accessor: (row) => row.order_no },
