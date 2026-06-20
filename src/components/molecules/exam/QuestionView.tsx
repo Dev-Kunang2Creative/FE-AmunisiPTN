@@ -42,7 +42,7 @@ export default function QuestionView({
 }: QuestionViewProps) {
   const isReviewMode = mode === "review" || mode === "admin-review";
   const isEssay = question.question_type === "essay";
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceMapRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [fontSize, setFontSize] = useState(16);
   const increaseFontSize = () => setFontSize(prev => Math.min(prev + 2, 24));
@@ -66,7 +66,7 @@ export default function QuestionView({
 
   useEffect(() => {
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      Object.values(debounceMapRef.current).forEach((timer) => clearTimeout(timer));
     };
   }, []);
 
@@ -81,11 +81,14 @@ export default function QuestionView({
   };
 
   const handleEssayChange = (value: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceMapRef.current[question.id]) {
+      clearTimeout(debounceMapRef.current[question.id]);
+    }
 
-    debounceRef.current = setTimeout(() => {
+    debounceMapRef.current[question.id] = setTimeout(() => {
       const hasContent = value.replace(/<[^>]*>/g, "").trim().length > 0;
       onSelectAnswer(hasContent ? value : null, question.id);
+      delete debounceMapRef.current[question.id];
     }, 650);
   };
 

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const token = session?.access_token || "";
+  const queryClient = useQueryClient();
 
   // Read subtest index from query param
   const subtestParam = parseInt(searchParams.get("subtest") || "0", 10);
@@ -203,8 +205,15 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const submitAnswerMutation = useSubmitAnswer({
     token,
     options: {
-      onError: (error: unknown) => {
+      onError: (error: unknown, variables) => {
         console.error("Failed to submit answer:", error);
+
+        // UI Rollback: Hapus jawaban dari state agar tombol kembali menjadi abu-abu
+        setAnswers((prev) => {
+          const newAnswers = { ...prev };
+          delete newAnswers[variables.questionId];
+          return newAnswers;
+        });
 
         const axiosError = error as AxiosError<{ message?: string }>;
         if (
@@ -274,6 +283,12 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     setShowTimeUpDialog(false);
 
     const toastId = toast.loading("Menyimpan jawaban Anda...");
+
+    // Wait Queue: Tunggu proses simpan jawaban di background selesai
+    while (queryClient.isMutating({ mutationKey: ["submitAnswer"] }) > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     try {
       if (currentSubtest) {
         await finishSubtestAsync({
