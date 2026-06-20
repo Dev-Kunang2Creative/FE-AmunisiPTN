@@ -13,6 +13,7 @@ export interface PackageBE {
   created_by: string;
   created_at: string;
   updated_at: string;
+  package_url: string;
 }
 
 // Types matching BE Order model

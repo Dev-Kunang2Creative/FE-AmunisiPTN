@@ -30,13 +30,7 @@ export default function DialogPackageDetail({
     },
   });
 
-  const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL ??
-    "https://dev-api.amunisiptn.com/storage";
-
-  const thumbnailUrl = data?.data?.thumbnail
-    ? `${storageUrl}/${data.data.thumbnail}`
-    : null;
+  const thumbnailUrl = data?.data?.package_url;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

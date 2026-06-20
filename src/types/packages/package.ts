@@ -12,4 +12,5 @@ export interface Package {
   created_by: string;
   created_at: Date;
   updated_at: Date;
+  package_url: string;
 }
