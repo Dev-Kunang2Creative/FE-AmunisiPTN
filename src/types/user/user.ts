@@ -19,6 +19,7 @@ export interface User {
   province?: string;
   city?: string;
   ticket_balance?: number;
+  last_transaction_date?: string;
   created_at: Date;
   updated_at: Date;
 }

@@ -115,9 +115,9 @@ export default function DashboardInjectTiketWrapper() {
       header: "Saldo Tiket",
     },
     {
-      accessorKey: "created_at",
-      header: "Tanggal Daftar",
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString("id-ID"),
+      accessorKey: "last_transaction_date",
+      header: "Transaksi Terakhir",
+      cell: ({ row }) => row.original.last_transaction_date ? new Date(row.original.last_transaction_date).toLocaleDateString("id-ID") : "-",
     },
     {
       id: "actions",
