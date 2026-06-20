@@ -1,4 +1,5 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
+import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getAuthApiHandler } from "@/http/auth/get-user";
 import { loginApiHandler } from "@/http/auth/login";
@@ -10,20 +11,58 @@ declare module "next-auth" {
     id: string;
     token?: string;
     role?: string;
+    refresh_token?: string;
+    expires_in?: number;
   }
 
   interface Session {
     user: Auth;
     access_token: string;
-    authError?: "TOKEN_INVALID" | "AUTH_UNAVAILABLE";
+    authError?: "TOKEN_INVALID" | "AUTH_UNAVAILABLE" | "REFRESH_TOKEN_ERROR";
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     access_token?: string;
+    refresh_token?: string;
+    expires_at?: number;
+    error?: string;
     role?: string;
     userOverrides?: Partial<Auth>;
+  }
+}
+
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    const url = process.env.NEXT_PUBLIC_API_URL + "/auth/refresh";
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token.refresh_token}`,
+      },
+      method: "POST",
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      access_token: refreshedTokens.token,
+      refresh_token: refreshedTokens.refresh_token ?? token.refresh_token,
+      expires_at: Date.now() + (refreshedTokens.expires_in || 3600) * 1000,
+    };
+  } catch (error) {
+    console.error("[auth] Error refreshing access token", error);
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   }
 }
 
@@ -61,6 +100,8 @@ export const authOptions: NextAuthOptions = {
           return {
             id: res.user.id,
             token: res.token,
+            refresh_token: res.refresh_token,
+            expires_in: res.expires_in,
             role: res.user.role,
           };
         } catch {
@@ -76,18 +117,38 @@ export const authOptions: NextAuthOptions = {
       // fresh from BE and are never frozen by an optimistic session update.
       if (trigger === "update" && session?.user) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { ticket_balance, id, role, email, ...safeOverrides } = session.user as Auth & { ticket_balance?: number };
+        const { ticket_balance, id, role, email, ...safeOverrides } =
+          session.user as Auth & { ticket_balance?: number };
         token.userOverrides = {
           ...(token.userOverrides || {}),
           ...safeOverrides,
         };
       }
 
+      if (trigger === "update" && session?.forceRefresh) {
+        if (token.refresh_token) {
+          return refreshAccessToken(token);
+        }
+      }
+
       if (user) {
         token.access_token = user.token;
+        token.refresh_token = user.refresh_token;
+        token.expires_at = user.expires_in
+          ? Date.now() + user.expires_in * 1000
+          : Date.now() + 3600 * 1000;
         token.sub = String(user.id);
         token.role = user.role;
       }
+
+      if (!token.expires_at || Date.now() < token.expires_at) {
+        return token;
+      }
+
+      if (token.refresh_token) {
+        return refreshAccessToken(token);
+      }
+
       return token;
     },
     session: async ({ session, token }) => {
@@ -104,8 +165,12 @@ export const authOptions: NextAuthOptions = {
       } catch (error: unknown) {
         // If BE returns 401 or is unreachable, return a degraded session
         // This prevents the entire app from crashing
-        const status = (error as { response?: { status?: number } })?.response?.status;
-        const authError = status === 401 ? "TOKEN_INVALID" : "AUTH_UNAVAILABLE";
+        const status = (error as { response?: { status?: number } })?.response
+          ?.status;
+        let authError = status === 401 ? "TOKEN_INVALID" : "AUTH_UNAVAILABLE";
+        if (token.error === "RefreshAccessTokenError") {
+          authError = "REFRESH_TOKEN_ERROR";
+        }
         const message = error instanceof Error ? error.message : String(error);
         console.warn("[auth] Failed to fetch user from BE:", message);
 

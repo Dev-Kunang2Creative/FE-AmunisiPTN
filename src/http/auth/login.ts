@@ -6,6 +6,8 @@ interface LoginResponse {
   message: string;
   user: User;
   token: string;
+  refresh_token?: string;
+  expires_in?: number;
 }
 
 export const loginApiHandler = async (
