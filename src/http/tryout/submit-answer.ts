@@ -37,7 +37,6 @@ export const useSubmitAnswer = ({
   options?: Partial<UseMutationOptions<SubmitAnswerResponse, AxiosError, SubmitAnswerPayload>>;
 }) => {
   return useMutation({
-    mutationKey: ["submitAnswer"],
     mutationFn: (payload: SubmitAnswerPayload) => SubmitAnswerHandler(payload, token),
     retry: 3,
     retryDelay: 1000,

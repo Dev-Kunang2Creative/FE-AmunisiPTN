@@ -42,7 +42,6 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const token = session?.access_token || "";
-  const queryClient = useQueryClient();
 
   // Read subtest index from query param
   const subtestParam = parseInt(searchParams.get("subtest") || "0", 10);
@@ -275,12 +274,6 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     setShowTimeUpDialog(false);
 
     const toastId = toast.loading("Menyimpan jawaban Anda...");
-
-    // Tunggu jika masih ada proses submit jawaban yang berjalan di background
-    while (queryClient.isMutating({ mutationKey: ["submitAnswer"] }) > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
     try {
       if (currentSubtest) {
         await finishSubtestAsync({
