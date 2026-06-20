@@ -103,8 +103,14 @@ export default function DashboardInjectTiketWrapper() {
 
   const vipUserColumns: ColumnDef<User>[] = [
     {
+      id: "no",
+      header: "No",
+      cell: ({ row }) => (page - 1) * perPage + row.index + 1,
+    },
+    {
       accessorKey: "name",
       header: "Nama",
+      cell: ({ row }) => <span className="font-bold">{row.original.name}</span>,
     },
     {
       accessorKey: "email",
