@@ -265,15 +265,14 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
     }
   }, [currentSubtestIndex, totalSubtests, router, tryoutId]);
 
-  // Auto-submit the current subtest and advance. Always navigates, even if the
-  // finish request fails, because the backend already marks an expired subtest
-  // on its own — otherwise the user would be stuck with the timer at 00:00.
   const autoSubmitAndAdvance = useCallback(async () => {
     if (timeUpHandledRef.current) return;
     timeUpHandledRef.current = true;
     setShowTimeUpDialog(false);
 
-    const toastId = toast.loading("Menyimpan jawaban Anda...");
+    const toastId = toast.loading(
+      "Waktu sudah habis sedang mengirim jawaban dan mengarahkan ke subtes selanjutnya...",
+    );
     try {
       if (currentSubtest) {
         await finishSubtestAsync({
@@ -282,9 +281,16 @@ function ExamContent({ tryoutId }: { tryoutId: string }) {
         });
       }
       toast.success("Berhasil menyimpan jawaban!", { id: toastId });
-    } catch {
-      // Non-fatal: the subtest is already expired on the server.
-      toast.dismiss(toastId);
+    } catch (err) {
+      toast.error(
+        getErrorMessage(
+          err,
+          "Gagal menyimpan jawaban, periksa kembali koneksi internet Anda!",
+        ),
+        {
+          id: toastId,
+        },
+      );
     } finally {
       navigateAfterSubtest();
     }

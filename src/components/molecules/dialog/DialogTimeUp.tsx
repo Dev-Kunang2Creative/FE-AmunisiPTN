@@ -1,6 +1,11 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useEffect } from "react";
 
 interface DialogTimeUpProps {
@@ -14,20 +19,25 @@ export default function DialogTimeUp({
   onOpenChange,
   onConfirm,
 }: DialogTimeUpProps) {
-  // Automatically confirm after 3 seconds
+  // Automatically confirm after 2 seconds
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (open) {
       timeout = setTimeout(() => {
         onConfirm();
-      }, 3000);
+      }, 2000);
     }
     return () => clearTimeout(timeout);
   }, [open, onConfirm]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md text-center p-8 rounded-2xl" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-md text-center p-8 rounded-2xl"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="w-16 h-16 flex items-center justify-center mb-1">
             <span className="text-5xl">⏰</span>
@@ -36,7 +46,8 @@ export default function DialogTimeUp({
             Waktu Habis!
           </DialogTitle>
           <DialogDescription className="text-gray-600 mb-4 px-2">
-            Waktu pengerjaan subtest ini telah habis. Jawaban kamu akan disubmit otomatis.
+            Waktu pengerjaan subtest ini telah habis. Jawaban kamu akan otomatis
+            tersubmit dan akan diarahkan ke subtest selanjutnya!
           </DialogDescription>
           <div className="w-full flex justify-center pt-2">
             <div className="animate-pulse flex space-x-2">
