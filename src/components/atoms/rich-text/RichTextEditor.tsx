@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Bold, Italic, List, ListOrdered, RemoveFormatting, Subscript, Superscript, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { Bold, Italic, List, ListOrdered, RemoveFormatting, Subscript, Superscript, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { sanitizeRichTextHtml } from "@/utils/rich-text";
@@ -20,6 +20,7 @@ const toolbarItems = [
   { command: "justifyLeft", label: "Align Left", icon: AlignLeft },
   { command: "justifyCenter", label: "Align Center", icon: AlignCenter },
   { command: "justifyRight", label: "Align Right", icon: AlignRight },
+  { command: "justifyFull", label: "Justify", icon: AlignJustify },
   { command: "insertUnorderedList", label: "Bullet list", icon: List },
   { command: "insertOrderedList", label: "Numbered list", icon: ListOrdered },
   { command: "superscript", label: "Superscript", icon: Superscript },
