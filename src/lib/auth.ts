@@ -68,23 +68,33 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.AUTH_SECRET,
+  session: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days — matches backend token lifetime
+  },
   providers: [
     CredentialsProvider({
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
         token: { label: "Token", type: "text" },
+        refresh_token: { label: "Refresh Token", type: "text" },
+        expires_in: { label: "Expires In", type: "text" },
       },
       authorize: async (credentials) => {
         if (!credentials) return null;
 
         try {
+          // Google OAuth callback — token already obtained from BE
           if (credentials.token) {
             const auth = await getAuthApiHandler(credentials.token);
 
             return {
               id: auth.id,
               token: credentials.token,
+              refresh_token: credentials.refresh_token || undefined,
+              expires_in: credentials.expires_in
+                ? Number(credentials.expires_in)
+                : undefined,
               role: auth.role,
             };
           }
@@ -141,7 +151,9 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
       }
 
-      if (!token.expires_at || Date.now() < token.expires_at) {
+      // Refresh proactively 5 minutes before expiry to avoid mid-session logouts
+      const BUFFER_MS = 5 * 60 * 1000;
+      if (!token.expires_at || Date.now() < token.expires_at - BUFFER_MS) {
         return token;
       }
 

@@ -11,6 +11,8 @@ function OAuthCallbackHandler() {
 
   useEffect(() => {
     const token = params.get("token");
+    const refreshToken = params.get("refresh_token");
+    const expiresIn = params.get("expires_in");
 
     if (!token) {
       router.push("/login");
@@ -19,6 +21,8 @@ function OAuthCallbackHandler() {
 
     signIn("credentials", {
       token,
+      refresh_token: refreshToken ?? undefined,
+      expires_in: expiresIn ?? undefined,
       redirect: false,
     }).then((res) => {
       if (!res || res.error) {
