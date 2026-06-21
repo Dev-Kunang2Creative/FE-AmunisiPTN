@@ -153,19 +153,13 @@ export default function ReviewPage({
           onClick={() =>
             router.push(`/dashboard/try-out/${tryoutId}/result${attemptQuery}`)
           }
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors min-w-0 flex-1 mr-4"
         >
-          <X className="w-5 h-5" />
-          <span className="font-bold text-sm hidden sm:inline">
+          <X className="w-5 h-5 shrink-0" />
+          <span className="font-bold text-xs sm:text-sm leading-tight text-left">
             {beReview?.data?.tryout_title ?? "Lihat Pembahasan"}
           </span>
         </button>
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Nomor Soal</p>
-          <p className="font-bold text-lg text-gray-900">
-            {currentQuestionIndex + 1}
-          </p>
-        </div>
         <div className="rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-[#004AAB]">
           Mode Review
         </div>

@@ -104,13 +104,28 @@ export default function ExamSidebar({
 
   return (
     <div className="w-full lg:w-65 shrink-0 flex flex-col gap-4">
-      <button
-        onClick={() => setIsMobileNavOpen(true)}
-        className="lg:hidden w-full bg-[#EBF4FF] text-[#004AAB] py-3 rounded-xl font-bold text-sm border border-[#004AAB]/20 flex items-center justify-center gap-2 transition-colors hover:bg-[#D6E8FF]"
-      >
-        <LayoutGrid className="w-5 h-5" />
-        Navigasi Soal
-      </button>
+      <div className="lg:hidden flex flex-col gap-2">
+        <button
+          onClick={() => setIsMobileNavOpen(true)}
+          className="w-full bg-[#EBF4FF] text-[#004AAB] py-3 rounded-xl font-bold text-sm border border-[#004AAB]/20 flex items-center justify-center gap-2 transition-colors hover:bg-[#D6E8FF]"
+        >
+          <LayoutGrid className="w-5 h-5" />
+          Navigasi Soal
+        </button>
+        {mode === "attempt" && (
+          <div className="w-full px-1 flex items-center gap-3 mt-1">
+            <div className="flex-1 bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-[#3B9245] h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${Math.min((answeredQuestions.size / Math.max(1, totalQuestions)) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <span className="text-xs font-bold text-gray-600 shrink-0">
+              {answeredQuestions.size}/{totalQuestions}
+            </span>
+          </div>
+        )}
+      </div>
 
       <div className="hidden lg:flex flex-col gap-4">
         {renderGrid()}
