@@ -12,9 +12,10 @@ const ALLOWED_TAGS = new Set([
   "SUP",
   "SUB",
   "SPAN",
+  "DIV",
 ]);
 
-const ALLOWED_STYLES = new Set(["font-weight", "font-style", "text-decoration"]);
+const ALLOWED_STYLES = new Set(["font-weight", "font-style", "text-decoration", "text-align"]);
 
 export function sanitizeRichTextHtml(value?: string | null): string {
   if (!value) return "";

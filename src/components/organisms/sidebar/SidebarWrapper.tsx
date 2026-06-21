@@ -187,6 +187,17 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      className={buttonClass("/dashboard/admin/inject-tiket")}
+                    >
+                      <Link href="/dashboard/admin/inject-tiket">
+                        <Ticket />
+                        <span>Inject Tiket</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
                       className={buttonClass("/dashboard/admin/packages")}
                     >
                       <Link href="/dashboard/admin/packages">
