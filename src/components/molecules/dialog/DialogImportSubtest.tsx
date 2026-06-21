@@ -25,6 +25,7 @@ import { useCreateSubtest } from "@/http/subtest/create-subtest";
 import { FileSpreadsheet, Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as XLSX from "xlsx";
 import {
   importSubtestSchema,
   ImportSubtestType,
@@ -71,7 +72,7 @@ export default function DialogImportSubtest({
     return name.endsWith(".csv") || name.endsWith(".xlsx");
   };
 
-  const handleFileChange = (file: File | null) => {
+  const handleFileChange = async (file: File | null) => {
     setResult(null);
     form.setValue("file", file as any, { shouldValidate: true });
     
@@ -79,6 +80,27 @@ export default function DialogImportSubtest({
       // Auto-fill Subtest Name based on File Name
       const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
       form.setValue("name", fileNameWithoutExt, { shouldValidate: true });
+
+      // Auto-count questions
+      try {
+        if (file.name.toLowerCase().endsWith(".xlsx")) {
+          const buffer = await file.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: "array" });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const validRows = data.filter((row: any) => row && row.length > 0);
+          
+          const rowCount = Math.max(0, validRows.length - 1); // exclude header
+          
+          if (rowCount > 0) {
+            form.setValue("max_questions", rowCount, { shouldValidate: true });
+          }
+        }
+      } catch (error) {
+        console.error("Gagal membaca file Excel:", error);
+      }
     } else {
       form.setValue("name", "", { shouldValidate: true });
     }
