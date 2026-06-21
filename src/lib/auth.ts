@@ -13,6 +13,7 @@ declare module "next-auth" {
     role?: string;
     refresh_token?: string;
     expires_in?: number;
+    cachedUser?: Auth;
   }
 
   interface Session {
@@ -30,6 +31,8 @@ declare module "next-auth/jwt" {
     error?: string;
     role?: string;
     userOverrides?: Partial<Auth>;
+    cachedUser?: Auth;
+    signedInAt?: number;
   }
 }
 
@@ -96,6 +99,7 @@ export const authOptions: NextAuthOptions = {
                 ? Number(credentials.expires_in)
                 : undefined,
               role: auth.role,
+              cachedUser: auth, // avoid double /auth/me in session()
             };
           }
 
@@ -113,6 +117,7 @@ export const authOptions: NextAuthOptions = {
             refresh_token: res.refresh_token,
             expires_in: res.expires_in,
             role: res.user.role,
+            cachedUser: res.user, // avoid double /auth/me in session()
           };
         } catch {
           return null;
@@ -149,6 +154,11 @@ export const authOptions: NextAuthOptions = {
           : Date.now() + 3600 * 1000;
         token.sub = String(user.id);
         token.role = user.role;
+        // Cache user data at sign-in to skip redundant /auth/me in session()
+        if (user.cachedUser) {
+          token.cachedUser = user.cachedUser;
+          token.signedInAt = Date.now();
+        }
       }
 
       // Refresh proactively 5 minutes before expiry to avoid mid-session logouts
@@ -167,6 +177,22 @@ export const authOptions: NextAuthOptions = {
       const access_token = token.access_token as string;
 
       try {
+        // If user just signed in (within 60s), reuse cached data from authorize()
+        // to avoid a redundant /auth/me round-trip on the very first session read.
+        const FRESH_WINDOW_MS = 60 * 1000;
+        if (
+          token.cachedUser &&
+          token.signedInAt &&
+          Date.now() - token.signedInAt < FRESH_WINDOW_MS
+        ) {
+          const overrides = token.userOverrides || {};
+          return {
+            ...session,
+            user: { ...token.cachedUser, ...overrides },
+            access_token,
+          };
+        }
+
         const auth = await getAuthApiHandler(access_token);
 
         // Merge fresh backend data with any front-end only overrides (like province, city) we stored
