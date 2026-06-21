@@ -25,11 +25,7 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
   {
     id: "name",
     header: "Nama",
-    cell: ({ row }) => (
-      <p suppressHydrationWarning className="font-medium">
-        {row.original.name}
-      </p>
-    ),
+    cell: ({ row }) => <p suppressHydrationWarning>{row.original.name}</p>,
   },
   {
     id: "email",
@@ -58,7 +54,7 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
     id: "ticket_balance",
     header: "Tiket",
     cell: ({ row }) => (
-      <div className="flex items-center gap-1.5 font-semibold">
+      <div className="flex items-center gap-1.5">
         <Ticket className="w-4 h-4" />
         <span suppressHydrationWarning>{row.original.ticket_balance ?? 0}</span>
       </div>
@@ -68,27 +64,21 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
     id: "phone_number",
     header: "No. HP",
     cell: ({ row }) => (
-      <p suppressHydrationWarning className="text-sm text-gray-600 font-mono">
-        {row.original.phone_number || "-"}
-      </p>
+      <p suppressHydrationWarning>{row.original.phone_number || "-"}</p>
     ),
   },
   {
     id: "school_origin",
     header: "Asal Sekolah",
     cell: ({ row }) => (
-      <p suppressHydrationWarning className="text-sm text-gray-600">
-        {row.original.school_origin || "-"}
-      </p>
+      <p suppressHydrationWarning>{row.original.school_origin || "-"}</p>
     ),
   },
   {
     id: "grade_level",
     header: "Kelas",
     cell: ({ row }) => (
-      <p suppressHydrationWarning className="text-sm text-gray-600">
-        {row.original.grade_level || "-"}
-      </p>
+      <p suppressHydrationWarning>{row.original.grade_level || "-"}</p>
     ),
   },
   {

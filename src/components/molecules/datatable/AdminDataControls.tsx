@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type React from "react";
-import { Download, FileSpreadsheet, FileText, Search, X } from "lucide-react";
+import { Download, Search, X, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const ALL_VALUE = "__all__";
 
 export type AdminExportColumn<T> = {
   header: string;
   accessor: (row: T) => string | number | boolean | null | undefined;
-  format?: (value: string | number | boolean | null | undefined, row: T) => string | number;
+  format?: (
+    value: string | number | boolean | null | undefined,
+    row: T,
+  ) => string | number;
 };
 
 export type AdminFilterOption<T> = {
@@ -93,7 +104,9 @@ export function useAdminTableControls<T>({
 }: UseAdminTableControlsProps<T>) {
   const [search, setSearch] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const [sortKey, setSortKey] = useState(defaultSort || sortOptions[0]?.key || "");
+  const [sortKey, setSortKey] = useState(
+    defaultSort || sortOptions[0]?.key || "",
+  );
 
   const rows = useMemo(() => {
     return getControlledAdminRows({
@@ -153,7 +166,9 @@ function buildExportRows<T>(rows: T[], columns: AdminExportColumn<T>[]) {
   return rows.map((row) =>
     columns.reduce<Record<string, string | number>>((acc, column) => {
       const value = column.accessor(row);
-      acc[column.header] = column.format ? column.format(value, row) : String(value ?? "-");
+      acc[column.header] = column.format
+        ? column.format(value, row)
+        : String(value ?? "-");
       return acc;
     }, {}),
   );
@@ -234,8 +249,16 @@ export async function exportAdminRowsToPdf<T>({
   try {
     const logo = await loadImageAsDataUrl("/images/logo/amunisiptn.png");
     const logoWidth = 96;
-    const logoHeight = logo.height > 0 ? (logoWidth * logo.height) / logo.width : 32;
-    doc.addImage(logo.dataUrl, "PNG", pageWidth - 40 - logoWidth, 24, logoWidth, logoHeight);
+    const logoHeight =
+      logo.height > 0 ? (logoWidth * logo.height) / logo.width : 32;
+    doc.addImage(
+      logo.dataUrl,
+      "PNG",
+      pageWidth - 40 - logoWidth,
+      24,
+      logoWidth,
+      logoHeight,
+    );
   } catch {
     // Logo is optional for export generation; keep the PDF downloadable if the asset fails to load.
   }
@@ -254,7 +277,9 @@ export async function exportAdminRowsToPdf<T>({
     body: rows.map((row) =>
       columns.map((column) => {
         const value = column.accessor(row);
-        return String(column.format ? column.format(value, row) : value ?? "-");
+        return String(
+          column.format ? column.format(value, row) : (value ?? "-"),
+        );
       }),
     ),
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
@@ -310,10 +335,16 @@ export function AdminDataToolbar<T>({
     setIsExporting(true);
     try {
       const rowsToExport =
-        typeof exportRows === "function" ? await exportRows() : exportRows ?? rows;
+        typeof exportRows === "function"
+          ? await exportRows()
+          : (exportRows ?? rows);
 
       if (type === "excel") {
-        await exportAdminRowsToExcel({ rows: rowsToExport, columns: exportColumns, title: exportTitle });
+        await exportAdminRowsToExcel({
+          rows: rowsToExport,
+          columns: exportColumns,
+          title: exportTitle,
+        });
       } else {
         await exportAdminRowsToPdf({
           rows: rowsToExport,
@@ -330,86 +361,150 @@ export function AdminDataToolbar<T>({
   };
 
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-1 flex-wrap items-center gap-2">
-        <div className="relative min-w-60 flex-1 lg:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full">
+      <div className="flex flex-1 flex-wrap items-center gap-2 md:gap-3">
+        {/* Search */}
+        <div className="relative w-full md:max-w-sm flex-1 min-w-[200px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder={searchPlaceholder}
-            className="pl-9"
+            className="pl-9 w-full bg-background"
           />
         </div>
 
-        {filters.map((filter) => (
-          <Select
-            key={filter.key}
-            value={filterValues[filter.key] || ALL_VALUE}
-            onValueChange={(value) => onFilterChange(filter.key, value)}
-          >
-            <SelectTrigger className="w-full bg-white sm:w-44">
-              <SelectValue placeholder={filter.placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>{filter.label}</SelectItem>
-              {filter.options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+        {/* Filter & Export Sheet */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="bg-background relative">
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Filter & Export</span>
+              <span className="sm:hidden">Menu</span>
+              {hasActiveControls && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-primary" />
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filter & Export</SheetTitle>
+              <SheetDescription>
+                Sesuaikan tampilan data dan ekspor laporan ke format Excel atau
+                PDF.
+              </SheetDescription>
+            </SheetHeader>
 
-        {sortOptions.length > 0 && (
-          <Select value={sortKey} onValueChange={onSortChange}>
-            <SelectTrigger className="w-full bg-white sm:w-56">
-              <SelectValue placeholder="Urutkan" />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+            <div className="flex flex-col gap-6 px-4">
+              {filters.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium">Filter Data</h4>
+                  <div className="flex flex-col gap-3">
+                    {filters.map((filter) => (
+                      <div key={filter.key} className="space-y-1.5">
+                        <label className="text-xs text-muted-foreground">
+                          {filter.label}
+                        </label>
+                        <Select
+                          value={filterValues[filter.key] || ALL_VALUE}
+                          onValueChange={(value) =>
+                            onFilterChange(filter.key, value)
+                          }
+                        >
+                          <SelectTrigger className="w-full bg-background">
+                            <SelectValue placeholder={filter.placeholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={ALL_VALUE}>
+                              Semua {filter.label}
+                            </SelectItem>
+                            {filter.options.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {hasActiveControls && (
-          <Button type="button" variant="ghost" size="icon" onClick={onReset} title="Reset filter">
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+              {/* Sorting */}
+              {sortOptions.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium">Urutkan Data</h4>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">
+                      Pilih urutan
+                    </label>
+                    <Select value={sortKey} onValueChange={onSortChange}>
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Urutkan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.map((option) => (
+                          <SelectItem key={option.key} value={option.key}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Reset Filters */}
+              {hasActiveControls && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onReset}
+                  className="w-full justify-center text-muted-foreground"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Reset Filter
+                </Button>
+              )}
+
+              <hr className="border-border" />
+
+              {/* Export Actions */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium">Export Laporan</h4>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => runExport("excel")}
+                    disabled={isExporting}
+                    className="w-full justify-start"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Excel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => runExport("pdf")}
+                    disabled={isExporting}
+                    className="w-full justify-start"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export PDF
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => runExport("excel")}
-          disabled={isExporting}
-          className="border-green-200 text-green-700 hover:bg-green-50"
-        >
-          <FileSpreadsheet className="h-4 w-4" />
-          Excel
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => runExport("pdf")}
-          disabled={isExporting}
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
-        >
-          <FileText className="h-4 w-4" />
-          PDF
-        </Button>
-        {children}
-        <span className="sr-only">
-          <Download className="h-4 w-4" />
-        </span>
-      </div>
+      {children && <div className="flex items-center gap-2">{children}</div>}
     </div>
   );
 }

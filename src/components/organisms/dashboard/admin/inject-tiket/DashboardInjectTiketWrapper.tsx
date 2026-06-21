@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Ticket, Gift } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -48,7 +53,9 @@ export default function DashboardInjectTiketWrapper() {
   const [searchInput, setSearchInput] = useState("");
 
   // Filter State
-  const [filterType, setFilterType] = useState<"all_vip" | "date_range">("all_vip");
+  const [filterType, setFilterType] = useState<"all_vip" | "date_range">(
+    "all_vip",
+  );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -62,7 +69,8 @@ export default function DashboardInjectTiketWrapper() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
   const [singleAmount, setSingleAmount] = useState(1);
-  const [singleDescription, setSingleDescription] = useState("Kompensasi Khusus");
+  const [singleDescription, setSingleDescription] =
+    useState("Kompensasi Khusus");
   const [isSingleConfirmOpen, setIsSingleConfirmOpen] = useState(false);
 
   // Fetch VIP Users
@@ -110,7 +118,7 @@ export default function DashboardInjectTiketWrapper() {
     {
       accessorKey: "name",
       header: "Nama",
-      cell: ({ row }) => <span className="font-bold">{row.original.name}</span>,
+      cell: ({ row }) => <span>{row.original.name}</span>,
     },
     {
       accessorKey: "email",
@@ -123,7 +131,12 @@ export default function DashboardInjectTiketWrapper() {
     {
       accessorKey: "last_transaction_date",
       header: "Transaksi Terakhir",
-      cell: ({ row }) => row.original.last_transaction_date ? new Date(row.original.last_transaction_date).toLocaleDateString("id-ID") : "-",
+      cell: ({ row }) =>
+        row.original.last_transaction_date
+          ? new Date(row.original.last_transaction_date).toLocaleDateString(
+              "id-ID",
+            )
+          : "-",
     },
     {
       id: "actions",
@@ -135,7 +148,6 @@ export default function DashboardInjectTiketWrapper() {
             setSelectedUser(row.original);
             setIsSingleModalOpen(true);
           }}
-          className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
         >
           Inject
         </Button>
@@ -155,7 +167,9 @@ export default function DashboardInjectTiketWrapper() {
 
   const handleBulkInjectClick = () => {
     if (filterType === "date_range" && (!startDate || !endDate)) {
-      toast.error("Silakan lengkapi filter tanggal terlebih dahulu untuk preview tabel.");
+      toast.error(
+        "Silakan lengkapi filter tanggal terlebih dahulu untuk preview tabel.",
+      );
       return;
     }
     setIsBulkModalOpen(true);
@@ -183,121 +197,142 @@ export default function DashboardInjectTiketWrapper() {
 
   return (
     <section>
-      <Card>
-        <CardContent>
-          <div className="space-y-6 pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <form onSubmit={handleSearchSubmit} className="flex flex-1 items-center gap-2">
-                <Input
-                  placeholder="Cari nama atau email..."
-                  className="max-w-xs"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-                <Button type="submit" variant="outline">Cari</Button>
-              </form>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex flex-1 items-center gap-2"
+          >
+            <Input
+              placeholder="Cari nama atau email..."
+              className="max-w-xs"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <Button type="submit" variant="outline">
+              Cari
+            </Button>
+          </form>
 
-              <div className="flex flex-col md:flex-row items-center gap-3 bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={filterType}
-                    onValueChange={(val: "all_vip" | "date_range") => {
-                      setFilterType(val);
-                      handleFilterChange();
-                    }}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Pilih Target" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all_vip">Semua VIP</SelectItem>
-                      <SelectItem value="date_range">Tanggal Transaksi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {filterType === "date_range" && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="date"
-                      className="w-[140px]"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        handleFilterChange();
-                      }}
-                    />
-                    <span>-</span>
-                    <Input
-                      type="date"
-                      className="w-[140px]"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value);
-                        handleFilterChange();
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <Button onClick={handleBulkInjectClick} className="gap-2 shrink-0 bg-primary">
-                <Ticket className="w-4 h-4" />
-                Inject Tiket Massal
-              </Button>
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Select
+                value={filterType}
+                onValueChange={(val: "all_vip" | "date_range") => {
+                  setFilterType(val);
+                  handleFilterChange();
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Pilih Target" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_vip">Semua VIP</SelectItem>
+                  <SelectItem value="date_range">Tanggal Transaksi</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <DataTable
-              columns={vipUserColumns}
-              data={userRows}
-              isLoading={isPending}
-              disablePagination={true}
-            />
-
-            {data && (
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span>
-                    {data.total > 0
-                      ? `Menampilkan ${(page - 1) * perPage + 1}–${Math.min(page * perPage, data.total)} dari ${data.total} VIP`
-                      : "Tidak ada data preview"}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs">Tampilkan</span>
-                    <Select
-                      value={String(perPage)}
-                      onValueChange={(v) => { setPerPage(Number(v)); setPage(1); }}
-                    >
-                      <SelectTrigger className="h-7 w-16 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PAGE_SIZE_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={String(s)} className="text-xs">{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-xs">per baris</span>
-                  </div>
-                </div>
-                {data.last_page > 1 && (
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-sm text-gray-600 min-w-20 text-center">
-                      {data.current_page} / {data.last_page}
-                    </span>
-                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(data.last_page, p + 1))} disabled={page === data.last_page}>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
+            {filterType === "date_range" && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  className="w-[140px]"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    handleFilterChange();
+                  }}
+                />
+                <span>-</span>
+                <Input
+                  type="date"
+                  className="w-[140px]"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    handleFilterChange();
+                  }}
+                />
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+
+          <Button
+            onClick={handleBulkInjectClick}
+            className="gap-2 shrink-0 bg-primary"
+          >
+            <Ticket className="w-4 h-4" />
+            Inject Tiket Massal
+          </Button>
+        </div>
+
+        <DataTable
+          columns={vipUserColumns}
+          data={userRows}
+          isLoading={isPending}
+          disablePagination={true}
+        />
+
+        {data && (
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3 text-sm text-gray-500">
+              <span>
+                {data.total > 0
+                  ? `Menampilkan ${(page - 1) * perPage + 1}–${Math.min(page * perPage, data.total)} dari ${data.total} VIP`
+                  : "Tidak ada data preview"}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">Tampilkan</span>
+                <Select
+                  value={String(perPage)}
+                  onValueChange={(v) => {
+                    setPerPage(Number(v));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-7 w-16 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={String(s)} className="text-xs">
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs">per baris</span>
+              </div>
+            </div>
+            {data.last_page > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm text-gray-600 min-w-20 text-center">
+                  {data.current_page} / {data.last_page}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPage((p) => Math.min(data.last_page, p + 1))
+                  }
+                  disabled={page === data.last_page}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Modal Bulk Input Form */}
       <Dialog open={isBulkModalOpen} onOpenChange={setIsBulkModalOpen}>
@@ -305,7 +340,9 @@ export default function DashboardInjectTiketWrapper() {
           <DialogHeader>
             <DialogTitle>Formulir Eksekusi Injeksi Tiket Massal</DialogTitle>
             <DialogDescription>
-              Anda akan memberikan tiket kepada total <strong>{data?.total || 0} pengguna VIP</strong> yang tampil di tabel (sesuai filter).
+              Anda akan memberikan tiket kepada total{" "}
+              <strong>{data?.total || 0} pengguna VIP</strong> yang tampil di
+              tabel (sesuai filter).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -326,12 +363,21 @@ export default function DashboardInjectTiketWrapper() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <p className="text-xs text-gray-500">Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".</p>
+              <p className="text-xs text-gray-500">
+                Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBulkModalOpen(false)}>Batal</Button>
-            <Button onClick={() => { setIsBulkModalOpen(false); setIsBulkConfirmOpen(true); }}>
+            <Button variant="outline" onClick={() => setIsBulkModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                setIsBulkModalOpen(false);
+                setIsBulkConfirmOpen(true);
+              }}
+            >
               Lanjut Eksekusi
             </Button>
           </DialogFooter>
@@ -345,19 +391,23 @@ export default function DashboardInjectTiketWrapper() {
             <AlertDialogTitle>Konfirmasi Akhir Injeksi Massal</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Anda akan memberikan <strong>{amount} tiket</strong> gratis dengan pesan:{" "}
-                <span className="italic">"{description}"</span>.
+                Anda akan memberikan <strong>{amount} tiket</strong> gratis
+                dengan pesan: <span className="italic">"{description}"</span>.
               </p>
               <p>
                 Total Penerima: <strong>{data?.total || 0} pengguna</strong>.
               </p>
               <p className="text-red-600 dark:text-red-400 font-semibold mt-2">
-                Peringatan: Tindakan ini tidak dapat dibatalkan. Tiket yang masuk ke saldo pengguna tidak bisa ditarik massal secara otomatis.
+                Peringatan: Tindakan ini tidak dapat dibatalkan. Tiket yang
+                masuk ke saldo pengguna tidak bisa ditarik massal secara
+                otomatis.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={injectMutation.isPending}>Kembali</AlertDialogCancel>
+            <AlertDialogCancel disabled={injectMutation.isPending}>
+              Kembali
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -366,7 +416,9 @@ export default function DashboardInjectTiketWrapper() {
               disabled={injectMutation.isPending}
               className="bg-primary"
             >
-              {injectMutation.isPending ? "Sedang Mengeksekusi..." : "Ya, Injeksi Massal!"}
+              {injectMutation.isPending
+                ? "Sedang Mengeksekusi..."
+                : "Ya, Injeksi Massal!"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -378,7 +430,8 @@ export default function DashboardInjectTiketWrapper() {
           <DialogHeader>
             <DialogTitle>Beri Tiket Spesial</DialogTitle>
             <DialogDescription>
-              Berikan tiket tambahan khusus untuk <strong>{selectedUser?.name}</strong> ({selectedUser?.email}).
+              Berikan tiket tambahan khusus untuk{" "}
+              <strong>{selectedUser?.name}</strong> ({selectedUser?.email}).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -399,12 +452,24 @@ export default function DashboardInjectTiketWrapper() {
                 value={singleDescription}
                 onChange={(e) => setSingleDescription(e.target.value)}
               />
-              <p className="text-xs text-gray-500">Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".</p>
+              <p className="text-xs text-gray-500">
+                Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSingleModalOpen(false)}>Batal</Button>
-            <Button onClick={() => { setIsSingleModalOpen(false); setIsSingleConfirmOpen(true); }}>
+            <Button
+              variant="outline"
+              onClick={() => setIsSingleModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                setIsSingleModalOpen(false);
+                setIsSingleConfirmOpen(true);
+              }}
+            >
               Lanjut Eksekusi
             </Button>
           </DialogFooter>
@@ -412,19 +477,25 @@ export default function DashboardInjectTiketWrapper() {
       </Dialog>
 
       {/* Modal Single Confirmation */}
-      <AlertDialog open={isSingleConfirmOpen} onOpenChange={setIsSingleConfirmOpen}>
+      <AlertDialog
+        open={isSingleConfirmOpen}
+        onOpenChange={setIsSingleConfirmOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Pemberian Tiket</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Berikan <strong>{singleAmount} tiket</strong> kepada <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
+                Berikan <strong>{singleAmount} tiket</strong> kepada{" "}
+                <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
                 <span className="italic">"{singleDescription}"</span>?
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={injectMutation.isPending}>Kembali</AlertDialogCancel>
+            <AlertDialogCancel disabled={injectMutation.isPending}>
+              Kembali
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();

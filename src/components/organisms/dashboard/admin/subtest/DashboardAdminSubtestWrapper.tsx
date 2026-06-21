@@ -11,7 +11,6 @@ import {
 } from "@/components/molecules/datatable/AdminDataControls";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useDeleteSubtest } from "@/http/subtest/delete-subtest";
 import { useGetAllSubtest } from "@/http/subtest/get-all-subtest";
 import { Subtest } from "@/types/subtest/subtest";
@@ -103,8 +102,6 @@ export default function DashboardAdminSubtestWrapper() {
 
   return (
     <section>
-      <Card>
-        <CardContent>
           <div className="space-y-6">
             <AdminDataToolbar
               search={controls.search}
@@ -123,9 +120,9 @@ export default function DashboardAdminSubtestWrapper() {
               exportTitle="laporan-subtes"
               filterSummary={`Total hasil: ${controls.rows.length}`}
             >
-              <Button size={"lg"} asChild>
+              <Button asChild>
                 <Link href="/dashboard/admin/subtest/create">
-                  <Plus /> Tambah Subtes
+                  <Plus className="mr-2 h-4 w-4" /> Tambah Subtes
                 </Link>
               </Button>
             </AdminDataToolbar>
@@ -137,8 +134,6 @@ export default function DashboardAdminSubtestWrapper() {
               isLoading={isPending}
             />
           </div>
-        </CardContent>
-      </Card>
 
       {isSelectedDeleteSubtest && (
         <AlertDialogDeleteSubtest

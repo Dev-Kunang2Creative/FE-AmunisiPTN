@@ -25,7 +25,7 @@ export default async function DashboardLayout({
         {isAdmin ? (
           <BreadcrumbProvider>
             <BreadcrumbNav />
-            <main className="min-w-0 px-5 pt-20 pb-6 md:pt-10 flex-col bg-[#fafafa] min-h-screen">
+            <main className="min-w-0 px-5 pt-20 pb-6 md:pt-10 flex-col bg-white min-h-screen">
               {children}
             </main>
           </BreadcrumbProvider>

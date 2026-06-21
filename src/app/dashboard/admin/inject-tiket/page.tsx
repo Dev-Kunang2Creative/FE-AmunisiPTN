@@ -10,13 +10,7 @@ export const metadata: Metadata = {
 export default function InjectTiketPage() {
   return (
     <main>
-      <div className="mb-6">
-        <DashboardTitle title="Injeksi Tiket VIP" />
-        <p className="text-sm text-gray-500 mt-1">
-          Pratinjau dan berikan tiket kompensasi secara massal kepada pengguna yang memiliki riwayat transaksi sukses.
-        </p>
-      </div>
-
+      <DashboardTitle title="Injeksi Tiket" />
       <DashboardInjectTiketWrapper />
     </main>
   );
