@@ -15,11 +15,12 @@ import { useDeleteSubtest } from "@/http/subtest/delete-subtest";
 import { useGetAllSubtest } from "@/http/subtest/get-all-subtest";
 import { Subtest } from "@/types/subtest/subtest";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, FileSpreadsheet } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import DialogImportSubtest from "@/components/molecules/dialog/DialogImportSubtest";
 
 const subtestExportColumns: AdminExportColumn<Subtest>[] = [
   { header: "Nama Subtes", accessor: (row) => row.name },
@@ -44,6 +45,7 @@ export default function DashboardAdminSubtestWrapper() {
   const [isSelectedDeleteSubtest, setIsSelectedDeleteSubtest] =
     useState<Subtest | null>(null);
   const [isDialogDeleteOpen, setIsDialogDeleteOpen] = useState(false);
+  const [isDialogImportOpen, setIsDialogImportOpen] = useState(false);
 
   const { data, isPending } = useGetAllSubtest({
     token: session?.access_token as string,
@@ -120,11 +122,16 @@ export default function DashboardAdminSubtestWrapper() {
               exportTitle="laporan-subtes"
               filterSummary={`Total hasil: ${controls.rows.length}`}
             >
-              <Button asChild>
-                <Link href="/dashboard/admin/subtest/create">
-                  <Plus className="mr-2 h-4 w-4" /> Tambah Subtes
-                </Link>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsDialogImportOpen(true)}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" /> Import Cepat
+                </Button>
+                <Button asChild>
+                  <Link href="/dashboard/admin/subtest/create">
+                    <Plus className="mr-2 h-4 w-4" /> Tambah Subtes
+                  </Link>
+                </Button>
+              </div>
             </AdminDataToolbar>
             <DataTable
               columns={subtestColumns({
@@ -142,6 +149,11 @@ export default function DashboardAdminSubtestWrapper() {
           confirmDelete={handleDeleteSubtest}
         />
       )}
+
+      <DialogImportSubtest
+        open={isDialogImportOpen}
+        onOpenChange={setIsDialogImportOpen}
+      />
     </section>
   );
 }
