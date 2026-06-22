@@ -53,6 +53,8 @@ export default function DialogImportSubtest({
     errors: string[];
   } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<ImportSubtestType>({
     resolver: zodResolver(importSubtestSchema),
@@ -148,8 +150,23 @@ export default function DialogImportSubtest({
       });
 
       if (importRes.imported > 0) {
-        toast.success("Subtes berhasil dibuat dan soal berhasil diimpor!");
+        toast.success(`Subtes berhasil dibuat! ${importRes.imported} soal diimpor${importRes.skipped > 0 ? `, ${importRes.skipped} dilewati` : ''}.`);
         queryClient.invalidateQueries({ queryKey: ["get-all-subtests"] });
+        
+        setCountdown(3);
+        let currentCount = 3;
+        countdownIntervalRef.current = setInterval(() => {
+          currentCount -= 1;
+          if (currentCount <= 0) {
+            if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+            setCountdown(null);
+            form.reset();
+            setResult(null);
+            onOpenChange(false);
+          } else {
+            setCountdown(currentCount);
+          }
+        }, 1000);
       } else {
         toast.error("Subtes terbuat, tapi tidak ada soal yang berhasil diimpor.");
         queryClient.invalidateQueries({ queryKey: ["get-all-subtests"] });
@@ -165,6 +182,8 @@ export default function DialogImportSubtest({
 
   const handleClose = () => {
     if (isImporting) return;
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
     form.reset();
     setResult(null);
     onOpenChange(false);
@@ -324,7 +343,7 @@ export default function DialogImportSubtest({
           {/* Actions */}
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="outline" className="flex-1" onClick={handleClose} disabled={isImporting}>
-              {result?.imported ? "Tutup" : "Batal"}
+              {result?.imported ? (countdown !== null ? `Tutup (${countdown}s)` : "Tutup") : "Batal"}
             </Button>
             <Button
               type="submit"
