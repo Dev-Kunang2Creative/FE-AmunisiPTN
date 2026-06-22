@@ -11,15 +11,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Ticket, Gift } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ticket, Gift, MoreHorizontal, History } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useGetVipUsers } from "@/http/users/get-vip-users";
 import { useInjectVipTickets } from "@/http/users/inject-vip-tickets";
+import { useGetUserTicketLogs, TicketLog } from "@/http/users/get-user-ticket-logs";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user/user";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +82,11 @@ export default function DashboardInjectTiketWrapper() {
     useState("Kompensasi Khusus");
   const [isSingleConfirmOpen, setIsSingleConfirmOpen] = useState(false);
 
+  // History Modal State
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPerPage, setHistoryPerPage] = useState(10);
+
   // Fetch VIP Users
   const { data, isPending } = useGetVipUsers({
     token,
@@ -111,6 +123,52 @@ export default function DashboardInjectTiketWrapper() {
     },
   });
 
+  const { data: historyData, isPending: isHistoryPending } = useGetUserTicketLogs({
+    userId: selectedUser?.id || "",
+    page: historyPage,
+    perPage: historyPerPage,
+    token,
+    options: { enabled: !!selectedUser && isHistoryModalOpen },
+  });
+
+  const ticketLogColumns: ColumnDef<TicketLog>[] = [
+    {
+      id: "no",
+      header: "No",
+      cell: ({ row }) => (historyPage - 1) * historyPerPage + row.index + 1,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Tanggal",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleString("id-ID"),
+    },
+    {
+      accessorKey: "type",
+      header: "Tipe",
+      cell: ({ row }) => {
+        const isCredit = row.original.type === "credit";
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${isCredit ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            {isCredit ? "Masuk" : "Keluar"}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "Jumlah",
+      cell: ({ row }) => (
+        <span className={row.original.type === "credit" ? "text-green-600" : "text-red-600"}>
+          {row.original.type === "credit" ? "+" : "-"}{row.original.amount}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Keterangan",
+    },
+  ];
+
   const vipUserColumns: ColumnDef<User>[] = [
     {
       id: "no",
@@ -131,6 +189,16 @@ export default function DashboardInjectTiketWrapper() {
       header: "Saldo Tiket",
     },
     {
+      accessorKey: "total_tickets_in",
+      header: "Masuk",
+      cell: ({ row }) => <span className="text-green-600">+{row.original.total_tickets_in || 0}</span>,
+    },
+    {
+      accessorKey: "total_tickets_out",
+      header: "Keluar",
+      cell: ({ row }) => <span className="text-red-600">-{row.original.total_tickets_out || 0}</span>,
+    },
+    {
       accessorKey: "last_transaction_date",
       header: "Transaksi Terakhir",
       cell: ({ row }) =>
@@ -144,29 +212,46 @@ export default function DashboardInjectTiketWrapper() {
       id: "actions",
       header: "Aksi",
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={() => {
-              setSelectedUser(row.original);
-              setSingleMode("inject");
-              setIsSingleModalOpen(true);
-            }}
-          >
-            Inject
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => {
-              setSelectedUser(row.original);
-              setSingleMode("pull");
-              setIsSingleModalOpen(true);
-            }}
-          >
-            Tarik
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedUser(row.original);
+                setHistoryPage(1);
+                setIsHistoryModalOpen(true);
+              }}
+            >
+              <History className="mr-2 h-4 w-4" />
+              <span>Riwayat Tiket</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedUser(row.original);
+                setSingleMode("inject");
+                setIsSingleModalOpen(true);
+              }}
+            >
+              <Ticket className="mr-2 h-4 w-4 text-green-600" />
+              <span>Inject Tiket</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedUser(row.original);
+                setSingleMode("pull");
+                setIsSingleModalOpen(true);
+              }}
+            >
+              <Ticket className="mr-2 h-4 w-4 text-red-600" />
+              <span className="text-red-600">Tarik Tiket</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
@@ -534,13 +619,96 @@ export default function DashboardInjectTiketWrapper() {
                 handleSingleExecute();
               }}
               disabled={injectMutation.isPending}
-              className="bg-primary"
+              className={singleMode === "pull" ? "bg-red-600 hover:bg-red-700" : "bg-primary"}
             >
-              {injectMutation.isPending ? "Mengeksekusi..." : "Berikan Tiket"}
+              {injectMutation.isPending ? "Mengeksekusi..." : singleMode === "pull" ? "Tarik Tiket" : "Berikan Tiket"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Riwayat Tiket */}
+      <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Riwayat Tiket</DialogTitle>
+            <DialogDescription>
+              Log aktivitas tiket untuk <strong>{selectedUser?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto py-4">
+            <DataTable
+              columns={ticketLogColumns}
+              data={historyData?.data || []}
+              isLoading={isHistoryPending}
+              disablePagination={true}
+            />
+            {historyData && (
+              <div className="flex items-center justify-between gap-4 flex-wrap mt-4">
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span>
+                    {historyData.total > 0
+                      ? `Menampilkan ${(historyPage - 1) * historyPerPage + 1}–${Math.min(historyPage * historyPerPage, historyData.total)} dari ${historyData.total} log`
+                      : "Tidak ada data riwayat"}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">Tampilkan</span>
+                    <Select
+                      value={String(historyPerPage)}
+                      onValueChange={(v) => {
+                        setHistoryPerPage(Number(v));
+                        setHistoryPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-16 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAGE_SIZE_OPTIONS.map((s) => (
+                          <SelectItem key={s} value={String(s)} className="text-xs">
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs">per baris</span>
+                  </div>
+                </div>
+                {historyData.last_page > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-gray-600 min-w-20 text-center">
+                      {historyData.current_page} / {historyData.last_page}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setHistoryPage((p) => Math.min(historyData.last_page, p + 1))
+                      }
+                      disabled={historyPage === historyData.last_page}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHistoryModalOpen(false)}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

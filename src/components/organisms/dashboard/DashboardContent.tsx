@@ -4,6 +4,7 @@ import HeroBanner from "@/components/molecules/dashboard/HeroBanner";
 import InfoCardCarousel from "@/components/molecules/dashboard/InfoCardCarousel";
 import LiveClassSection from "@/components/molecules/dashboard/LiveClassSection";
 import DialogCompleteProfile from "@/components/molecules/dialog/DialogCompleteProfile";
+import DialogAnnouncementPopup from "@/components/molecules/dialog/DialogAnnouncementPopup";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
@@ -30,6 +31,8 @@ export default function DashboardContent() {
           if (!open) setProfileDialogDismissed(true);
         }} 
       />
+
+      <DialogAnnouncementPopup />
     </>
   );
 }

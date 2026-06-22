@@ -20,6 +20,8 @@ export interface User {
   city?: string;
   ticket_balance?: number;
   last_transaction_date?: string;
+  total_tickets_in?: number;
+  total_tickets_out?: number;
   created_at: Date;
   updated_at: Date;
 }
