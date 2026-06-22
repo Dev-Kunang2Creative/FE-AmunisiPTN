@@ -9,6 +9,7 @@ export interface InjectVipTicketsPayload {
   start_date?: string;
   end_date?: string;
   user_id?: string;
+  action?: "inject" | "pull";
 }
 
 export interface InjectVipTicketsResponse {

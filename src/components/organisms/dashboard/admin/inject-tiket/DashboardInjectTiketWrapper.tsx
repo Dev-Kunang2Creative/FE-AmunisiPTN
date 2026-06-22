@@ -59,15 +59,17 @@ export default function DashboardInjectTiketWrapper() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Bulk Inject Form State
+  // Bulk Form State
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkMode, setBulkMode] = useState<"inject" | "pull">("inject");
   const [amount, setAmount] = useState(1);
   const [description, setDescription] = useState("Kompensasi Kendala Teknis");
   const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false);
 
-  // Single Inject Form State
+  // Single Form State
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
+  const [singleMode, setSingleMode] = useState<"inject" | "pull">("inject");
   const [singleAmount, setSingleAmount] = useState(1);
   const [singleDescription, setSingleDescription] =
     useState("Kompensasi Khusus");
@@ -142,15 +144,29 @@ export default function DashboardInjectTiketWrapper() {
       id: "actions",
       header: "Aksi",
       cell: ({ row }) => (
-        <Button
-          size="sm"
-          onClick={() => {
-            setSelectedUser(row.original);
-            setIsSingleModalOpen(true);
-          }}
-        >
-          Inject
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              setSelectedUser(row.original);
+              setSingleMode("inject");
+              setIsSingleModalOpen(true);
+            }}
+          >
+            Inject
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => {
+              setSelectedUser(row.original);
+              setSingleMode("pull");
+              setIsSingleModalOpen(true);
+            }}
+          >
+            Tarik
+          </Button>
+        </div>
       ),
     },
   ];
@@ -165,13 +181,14 @@ export default function DashboardInjectTiketWrapper() {
     setPage(1);
   };
 
-  const handleBulkInjectClick = () => {
+  const handleBulkActionClick = (mode: "inject" | "pull") => {
     if (filterType === "date_range" && (!startDate || !endDate)) {
       toast.error(
         "Silakan lengkapi filter tanggal terlebih dahulu untuk preview tabel.",
       );
       return;
     }
+    setBulkMode(mode);
     setIsBulkModalOpen(true);
   };
 
@@ -182,6 +199,7 @@ export default function DashboardInjectTiketWrapper() {
       filter_type: filterType,
       start_date: filterType === "date_range" ? startDate : undefined,
       end_date: filterType === "date_range" ? endDate : undefined,
+      action: bulkMode,
     });
   };
 
@@ -192,6 +210,7 @@ export default function DashboardInjectTiketWrapper() {
       description: singleDescription,
       filter_type: "single_user",
       user_id: selectedUser.id,
+      action: singleMode,
     });
   };
 
@@ -258,13 +277,23 @@ export default function DashboardInjectTiketWrapper() {
             )}
           </div>
 
-          <Button
-            onClick={handleBulkInjectClick}
-            className="gap-2 shrink-0 bg-primary"
-          >
-            <Ticket className="w-4 h-4" />
-            Inject Tiket Massal
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => handleBulkActionClick("inject")}
+              className="gap-2 bg-primary"
+            >
+              <Ticket className="w-4 h-4" />
+              Inject Tiket Massal
+            </Button>
+            <Button
+              onClick={() => handleBulkActionClick("pull")}
+              variant="destructive"
+              className="gap-2"
+            >
+              <Ticket className="w-4 h-4" />
+              Tarik Tiket Massal
+            </Button>
+          </div>
         </div>
 
         <DataTable
@@ -338,9 +367,9 @@ export default function DashboardInjectTiketWrapper() {
       <Dialog open={isBulkModalOpen} onOpenChange={setIsBulkModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Formulir Eksekusi Injeksi Tiket Massal</DialogTitle>
+            <DialogTitle>Formulir Eksekusi {bulkMode === "inject" ? "Injeksi" : "Penarikan"} Tiket Massal</DialogTitle>
             <DialogDescription>
-              Anda akan memberikan tiket kepada total{" "}
+              Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"} tiket {bulkMode === "inject" ? "kepada" : "dari"} total{" "}
               <strong>{data?.total || 0} pengguna VIP</strong> yang tampil di
               tabel (sesuai filter).
             </DialogDescription>
@@ -388,19 +417,17 @@ export default function DashboardInjectTiketWrapper() {
       <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Akhir Injeksi Massal</AlertDialogTitle>
+            <AlertDialogTitle>Konfirmasi Akhir {bulkMode === "inject" ? "Injeksi" : "Penarikan"} Massal</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Anda akan memberikan <strong>{amount} tiket</strong> gratis
+                Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"} <strong>{amount} tiket</strong> {bulkMode === "inject" ? "gratis" : ""} 
                 dengan pesan: <span className="italic">"{description}"</span>.
               </p>
               <p>
                 Total Penerima: <strong>{data?.total || 0} pengguna</strong>.
               </p>
               <p className="text-red-600 dark:text-red-400 font-semibold mt-2">
-                Peringatan: Tindakan ini tidak dapat dibatalkan. Tiket yang
-                masuk ke saldo pengguna tidak bisa ditarik massal secara
-                otomatis.
+                Peringatan: Tindakan ini tidak dapat dibatalkan. {bulkMode === "inject" ? "Tiket yang masuk ke saldo pengguna tidak bisa ditarik massal secara otomatis." : "Jika saldo pengguna kurang dari jumlah tarik, maka saldo akan dikosongkan (menjadi 0)."}
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -428,9 +455,9 @@ export default function DashboardInjectTiketWrapper() {
       <Dialog open={isSingleModalOpen} onOpenChange={setIsSingleModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Beri Tiket Spesial</DialogTitle>
+            <DialogTitle>{singleMode === "inject" ? "Beri Tiket Spesial" : "Tarik Tiket Pengguna"}</DialogTitle>
             <DialogDescription>
-              Berikan tiket tambahan khusus untuk{" "}
+              {singleMode === "inject" ? "Berikan tiket tambahan khusus untuk" : "Tarik tiket dari saldo"}{" "}
               <strong>{selectedUser?.name}</strong> ({selectedUser?.email}).
             </DialogDescription>
           </DialogHeader>
@@ -483,13 +510,18 @@ export default function DashboardInjectTiketWrapper() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Pemberian Tiket</AlertDialogTitle>
+            <AlertDialogTitle>Konfirmasi {singleMode === "inject" ? "Pemberian" : "Penarikan"} Tiket</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Berikan <strong>{singleAmount} tiket</strong> kepada{" "}
+                {singleMode === "inject" ? "Berikan" : "Tarik"} <strong>{singleAmount} tiket</strong> {singleMode === "inject" ? "kepada" : "dari"}{" "}
                 <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
                 <span className="italic">"{singleDescription}"</span>?
               </p>
+              {singleMode === "pull" && (
+                <p className="text-red-600 dark:text-red-400 font-semibold mt-2">
+                  Jika saldo saat ini kurang dari {singleAmount}, maka saldo akan ditarik seluruhnya hingga 0.
+                </p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
