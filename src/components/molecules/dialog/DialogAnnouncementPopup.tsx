@@ -48,9 +48,9 @@ export default function DialogAnnouncementPopup() {
           </Button>
         </DialogClose>
 
-        <div className="overflow-y-auto flex flex-col h-full max-h-[85vh]">
+        <div className="flex flex-col h-full w-full max-h-[95vh]">
           <div className="p-4 pb-0 flex-shrink-0 flex justify-center">
-            <div className="w-full max-w-[280px] sm:max-w-[320px] relative rounded-lg overflow-hidden" style={{ aspectRatio: '4/5' }}>
+            <div className="w-full max-w-[250px] sm:max-w-[280px] relative rounded-lg overflow-hidden" style={{ aspectRatio: '4/5' }}>
               <Image
                 src="/images/pop_up.png"
                 alt="Pengumuman AmunisiPTN"
