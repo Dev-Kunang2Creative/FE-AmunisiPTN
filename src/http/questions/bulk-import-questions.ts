@@ -13,6 +13,7 @@ export interface BulkImportResponse {
   imported: number;
   skipped: number;
   errors: string[];
+  imported_images?: number;
 }
 
 export const BulkImportQuestionsHandler = async ({

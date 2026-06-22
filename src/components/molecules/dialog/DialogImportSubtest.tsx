@@ -51,6 +51,7 @@ export default function DialogImportSubtest({
     imported: number;
     skipped: number;
     errors: string[];
+    imported_images?: number;
   } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -147,10 +148,11 @@ export default function DialogImportSubtest({
         imported: importRes.imported,
         skipped: importRes.skipped,
         errors: importRes.errors,
+        imported_images: importRes.imported_images,
       });
 
       if (importRes.imported > 0) {
-        toast.success(`Subtes berhasil dibuat! ${importRes.imported} soal diimpor${importRes.skipped > 0 ? `, ${importRes.skipped} dilewati` : ''}.`);
+        toast.success(`Subtes berhasil dibuat! ${importRes.imported} soal diimpor${importRes.skipped > 0 ? `, ${importRes.skipped} dilewati` : ''}${importRes.imported_images ? ` & ${importRes.imported_images} gambar terbaca` : ''}.`);
         queryClient.invalidateQueries({ queryKey: ["get-all-subtests"] });
         
         setCountdown(3);
@@ -326,10 +328,16 @@ export default function DialogImportSubtest({
                   : <><AlertCircle className="w-4 h-4 text-red-600" /><span className="text-red-800">Gagal Impor Soal</span></>
                 }
               </div>
-              <p className="text-gray-700">
-                Subtes dibuat. <span className="font-medium text-green-700">{result.imported} soal</span> diimpor
-                {result.skipped > 0 && <>, <span className="font-medium text-red-600">{result.skipped} baris</span> dilewati</>}.
-              </p>
+              <div className="text-gray-700">
+                Subtes dibuat.
+                {result.imported > 0 && (
+                  <span className="font-medium text-green-700 ml-1">
+                    {result.imported} soal diimpor
+                    {result.imported_images ? ` (${result.imported_images} gambar terbaca)` : ''}
+                  </span>
+                )}
+                {result.skipped > 0 && <span className="font-medium text-red-600">, {result.skipped} baris dilewati</span>}.
+              </div>
               {result.errors.length > 0 && (
                 <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
                   {result.errors.map((err, i) => (
