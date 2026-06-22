@@ -21,12 +21,28 @@ export const SubmitAnswerHandler = async (
   payload: SubmitAnswerPayload,
   token: string
 ): Promise<SubmitAnswerResponse> => {
-  const { data } = await api.post<SubmitAnswerResponse>(
-    `/tryouts/${payload.tryoutId}/subtests/${payload.subtestId}/questions/${payload.questionId}/answer`,
-    { answer: payload.answer },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return data;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/tryouts/${payload.tryoutId}/subtests/${payload.subtestId}/questions/${payload.questionId}/answer`;
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/json",
+    },
+    body: JSON.stringify({ answer: payload.answer }),
+    keepalive: true, // FLAG SAKTI UNTUK SAFARI: cegah request dibatalkan saat pindah halaman/minimize app
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const error = new Error("Failed to submit answer");
+    // Mock the axios error structure since react-query onError block might expect it
+    (error as any).response = { status: response.status, data: errorData };
+    throw error;
+  }
+
+  return response.json();
 };
 
 export const useSubmitAnswer = ({
