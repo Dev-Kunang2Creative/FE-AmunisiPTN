@@ -333,7 +333,7 @@ export default function FormCreateSubtestTryout({
 
         <Button
           type="button"
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
           onClick={handleBulkAppend}
         >
           <Wand2 className="w-4 h-4 mr-2" />
