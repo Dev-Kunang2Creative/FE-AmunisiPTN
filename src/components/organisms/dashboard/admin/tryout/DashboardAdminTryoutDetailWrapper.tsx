@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { useGetDetailTryout } from "@/http/tryout/get-detail-tryout";
 import { useExportTryoutPdf } from "@/http/tryout/export-tryout-pdf";
 import { format } from "date-fns";
@@ -111,8 +110,6 @@ export default function DashboardAdminTryoutDetailWrapper({
 
   return (
     <section>
-      <Card>
-        <CardContent className="space-y-12">
           <div className="grid xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
             <div className="flex flex-col gap-1">
               <h3 className="text-muted-foreground">Judul Tryout</h3>
@@ -243,8 +240,6 @@ export default function DashboardAdminTryoutDetailWrapper({
               isLoading={isPendingSubtest}
             />
           </div>
-        </CardContent>
-      </Card>
 
       <DialogCreateSubtestTryout
         open={isDialogOpen}

@@ -28,7 +28,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Trash2, Wand2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -114,6 +114,53 @@ export default function FormCreateSubtestTryout({
     createHandler({ id: tryoutId, body });
   };
 
+  const handleBulkAppend = () => {
+    const currentSubtests = form.getValues("subtests");
+    const lastValidSubtest = currentSubtests.slice().reverse().find(s => s.subtest_id !== "");
+    
+    if (!lastValidSubtest || !data?.data) {
+      toast.error("Pilih minimal satu subtes terlebih dahulu sebelum menggunakan Auto-Fill.");
+      return;
+    }
+    
+    const selectedId = lastValidSubtest.subtest_id;
+    const selectedSubtest = data.data.find(s => s.id === selectedId);
+    if (!selectedSubtest) return;
+
+    // Detect prefix (e.g. "UM06_", "TO1-", "SNBT ")
+    const match = selectedSubtest.name.match(/^([^_\-\s]+[_\-\s]+)/);
+    if (!match) {
+      toast.error("Tidak ditemukan format awalan kode (misal: UM06_) pada nama subtes ini.");
+      return;
+    }
+
+    const prefix = match[0];
+    const relatedSubtests = data.data.filter(s => s.name.startsWith(prefix) && s.id !== selectedId);
+
+    if (relatedSubtests.length === 0) {
+      toast.error(`Tidak ada subtes lain yang berawalan "${prefix}".`);
+      return;
+    }
+
+    const currentIds = form.getValues("subtests").map(s => s.subtest_id);
+    const toAdd = relatedSubtests.filter(s => !currentIds.includes(s.id));
+
+    if (toAdd.length === 0) {
+      toast.info(`Semua subtes berawalan "${prefix}" sudah ada di dalam form.`);
+      return;
+    }
+
+    toAdd.forEach(s => {
+      append({
+        subtest_id: s.id,
+        duration_minutes: 30,
+        is_active: true
+      });
+    });
+
+    toast.success(`Berhasil menambahkan ${toAdd.length} subtes berawalan "${prefix}".`);
+  };
+
   return (
     <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
       <ScrollArea className="h-[420px]">
@@ -162,12 +209,12 @@ export default function FormCreateSubtestTryout({
                               variant="outline"
                               className="w-full justify-between"
                             >
-                              {field.value
-                                ? data?.data?.find((s) => s.id === field.value)
-                                    ?.name
-                                : "Pilih subtest"}
-
-                              <ChevronsUpDown className="opacity-50" />
+                              <span className="truncate">
+                                {field.value
+                                  ? data?.data?.find((s) => s.id === field.value)?.name
+                                  : "Pilih subtest"}
+                              </span>
+                              <ChevronsUpDown className="opacity-50 shrink-0 ml-2" />
                             </Button>
                           </PopoverTrigger>
 
@@ -266,22 +313,33 @@ export default function FormCreateSubtestTryout({
         </div>
       </ScrollArea>
 
-      {/* ADD SUBTEST */}
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full"
-        onClick={() =>
-          append({
-            subtest_id: "",
-            duration_minutes: 30,
-            is_active: true,
-          })
-        }
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Tambah Subtest
-      </Button>
+      {/* ADD SUBTEST & AUTO FILL */}
+      <div className="flex gap-3 w-full">
+        <Button
+          type="button"
+          variant="secondary"
+          className="flex-1"
+          onClick={() =>
+            append({
+              subtest_id: "",
+              duration_minutes: 30,
+              is_active: true,
+            })
+          }
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Tambah Subtest
+        </Button>
+
+        <Button
+          type="button"
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          onClick={handleBulkAppend}
+        >
+          <Wand2 className="w-4 h-4 mr-2" />
+          Auto-Fill
+        </Button>
+      </div>
 
       <div className="flex justify-end">
         <Button type="submit" size="lg" disabled={isPending}>

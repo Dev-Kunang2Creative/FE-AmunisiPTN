@@ -577,20 +577,20 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
       )}
 
       {/* Table */}
-      <Card className="overflow-hidden w-full">
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <div className="overflow-hidden w-full">
+        <div className="flex flex-row items-start justify-between gap-4 py-4">
           <div>
-            <CardTitle className="text-base">Hasil Tryout Peserta</CardTitle>
-            <CardDescription>
+            <h3 className="text-base font-semibold leading-none tracking-tight">Hasil Tryout Peserta</h3>
+            <p className="text-sm text-muted-foreground mt-1">
               Daftar hasil tryout berdasarkan skor
-            </CardDescription>
+            </p>
           </div>
           <Badge variant="secondary" className="shrink-0 text-xs">
             {leaderboard.length} peserta
           </Badge>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0 overflow-x-auto">
+        <div className="p-0 overflow-x-auto">
           <Table className="min-w-[900px] w-full">
             <TableHeader>
               <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -617,8 +617,8 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <ProofImagesDialog
         entry={selectedProofEntry}

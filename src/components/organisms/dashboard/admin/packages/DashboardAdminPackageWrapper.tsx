@@ -12,7 +12,6 @@ import {
 } from "@/components/molecules/datatable/AdminDataControls";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useDeletePackage } from "@/http/packages/delete-package";
 import { useGetAllPackage } from "@/http/packages/get-all-package";
 import { Package } from "@/types/packages/package";
@@ -27,20 +26,62 @@ import { toast } from "sonner";
 const packageExportColumns: AdminExportColumn<Package>[] = [
   { header: "Nama Paket", accessor: (row) => row.name },
   { header: "Slug", accessor: (row) => row.slug },
-  { header: "Harga", accessor: (row) => row.price, format: (value) => formatPrice(Number(value || 0)) },
-  { header: "Harga Diskon", accessor: (row) => row.discount_price, format: (value) => (value == null ? "-" : formatPrice(Number(value))) },
+  {
+    header: "Harga",
+    accessor: (row) => row.price,
+    format: (value) => formatPrice(Number(value || 0)),
+  },
+  {
+    header: "Harga Diskon",
+    accessor: (row) => row.discount_price,
+    format: (value) => (value == null ? "-" : formatPrice(Number(value))),
+  },
   { header: "Tiket", accessor: (row) => row.ticket_amount },
-  { header: "Status", accessor: (row) => (row.is_active ? "Aktif" : "Tidak Aktif") },
-  { header: "Tanggal Dibuat", accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID") },
+  {
+    header: "Status",
+    accessor: (row) => (row.is_active ? "Aktif" : "Tidak Aktif"),
+  },
+  {
+    header: "Tanggal Dibuat",
+    accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID"),
+  },
 ];
 
 const packageSortOptions: AdminSortOption<Package>[] = [
-  { key: "newest", label: "Terbaru", compare: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
-  { key: "oldest", label: "Terlama", compare: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
-  { key: "az", label: "Nama A-Z", compare: (a, b) => a.name.localeCompare(b.name, "id-ID") },
-  { key: "za", label: "Nama Z-A", compare: (a, b) => b.name.localeCompare(a.name, "id-ID") },
-  { key: "price-high", label: "Harga tertinggi", compare: (a, b) => Number(b.discount_price ?? b.price) - Number(a.discount_price ?? a.price) },
-  { key: "price-low", label: "Harga terendah", compare: (a, b) => Number(a.discount_price ?? a.price) - Number(b.discount_price ?? b.price) },
+  {
+    key: "newest",
+    label: "Terbaru",
+    compare: (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  },
+  {
+    key: "oldest",
+    label: "Terlama",
+    compare: (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  },
+  {
+    key: "az",
+    label: "Nama A-Z",
+    compare: (a, b) => a.name.localeCompare(b.name, "id-ID"),
+  },
+  {
+    key: "za",
+    label: "Nama Z-A",
+    compare: (a, b) => b.name.localeCompare(a.name, "id-ID"),
+  },
+  {
+    key: "price-high",
+    label: "Harga tertinggi",
+    compare: (a, b) =>
+      Number(b.discount_price ?? b.price) - Number(a.discount_price ?? a.price),
+  },
+  {
+    key: "price-low",
+    label: "Harga terendah",
+    compare: (a, b) =>
+      Number(a.discount_price ?? a.price) - Number(b.discount_price ?? b.price),
+  },
 ];
 
 export default function DashboardAdminPackageWrapper() {
@@ -111,7 +152,11 @@ export default function DashboardAdminPackageWrapper() {
   ];
   const controls = useAdminTableControls({
     data: packageRows,
-    searchFields: [(row) => row.name, (row) => row.description, (row) => row.slug],
+    searchFields: [
+      (row) => row.name,
+      (row) => row.description,
+      (row) => row.slug,
+    ],
     filters: packageFilters,
     sortOptions: packageSortOptions,
     defaultSort: "newest",
@@ -119,43 +164,39 @@ export default function DashboardAdminPackageWrapper() {
 
   return (
     <section>
-      <Card>
-        <CardContent>
-          <div className="space-y-6">
-            <AdminDataToolbar
-              search={controls.search}
-              onSearchChange={controls.setSearch}
-              searchPlaceholder="Cari nama, slug, deskripsi..."
-              filters={packageFilters}
-              filterValues={controls.filterValues}
-              onFilterChange={controls.setFilter}
-              sortOptions={packageSortOptions}
-              sortKey={controls.sortKey}
-              onSortChange={controls.setSortKey}
-              onReset={controls.reset}
-              hasActiveControls={controls.hasActiveControls}
-              rows={controls.rows}
-              exportColumns={packageExportColumns}
-              exportTitle="laporan-paket"
-              filterSummary={`Total hasil: ${controls.rows.length}`}
-            >
-              <Button size={"lg"} asChild>
-                <Link href="/dashboard/admin/packages/create">
-                  <Plus /> Tambah Paket
-                </Link>
-              </Button>
-            </AdminDataToolbar>
-            <DataTable
-              columns={packageColumns({
-                detailPackageHandler: handleDetailPackage,
-                deletePackageHandler: deletePackageHandler,
-              })}
-              data={controls.rows}
-              isLoading={isPending}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <AdminDataToolbar
+          search={controls.search}
+          onSearchChange={controls.setSearch}
+          searchPlaceholder="Cari nama, slug, deskripsi..."
+          filters={packageFilters}
+          filterValues={controls.filterValues}
+          onFilterChange={controls.setFilter}
+          sortOptions={packageSortOptions}
+          sortKey={controls.sortKey}
+          onSortChange={controls.setSortKey}
+          onReset={controls.reset}
+          hasActiveControls={controls.hasActiveControls}
+          rows={controls.rows}
+          exportColumns={packageExportColumns}
+          exportTitle="laporan-paket"
+          filterSummary={`Total hasil: ${controls.rows.length}`}
+        >
+          <Button asChild>
+            <Link href="/dashboard/admin/packages/create">
+              <Plus className="mr-2 h-4 w-4" /> Tambah Paket
+            </Link>
+          </Button>
+        </AdminDataToolbar>
+        <DataTable
+          columns={packageColumns({
+            detailPackageHandler: handleDetailPackage,
+            deletePackageHandler: deletePackageHandler,
+          })}
+          data={controls.rows}
+          isLoading={isPending}
+        />
+      </div>
 
       {selectedPackage && (
         <DialogPackageDetail

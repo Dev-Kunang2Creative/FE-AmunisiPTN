@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { ExternalLink, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import SmartPagination from "@/components/molecules/pagination/SmartPagination";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
@@ -47,55 +45,40 @@ export default function DashboardAdminTryoutProofWrapper() {
 
   return (
     <section className="space-y-5">
-      <Card>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col">
-              <h3 className="text-lg font-semibold">Daftar Bukti Follow</h3>
-              <p className="text-sm text-muted-foreground">
-                Kelola daftar bukti follow peserta tryout gratis.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Cari peserta atau tryout..."
-                  className="pl-9 w-full"
-                />
-              </div>
-              <Badge variant="secondary" className="w-fit">
-                {data?.total ?? 0} total data
-              </Badge>
-            </div>
-          </div>
-
-          <DataTable
-            columns={proofsColumns({ viewDetailHandler: handleViewDetail })}
-            data={rows}
-            isLoading={isPending}
-            disablePagination={true}
-          />
-
-          <SmartPagination
-            page={data?.current_page ?? page}
-            totalItems={data?.total ?? 0}
-            perPage={Number(data?.per_page ?? perPage)}
-            perPageOptions={[6, 12, 24, 48]}
-            itemLabel="bukti"
-            onPageChange={setPage}
-            onPerPageChange={(nextPerPage) => {
-              setPerPage(nextPerPage);
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
               setPage(1);
             }}
+            placeholder="Cari peserta atau tryout..."
+            className="pl-9 w-full"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <DataTable
+        columns={proofsColumns({ viewDetailHandler: handleViewDetail })}
+        data={rows}
+        isLoading={isPending}
+        disablePagination={true}
+      />
+
+      <SmartPagination
+        page={data?.current_page ?? page}
+        totalItems={data?.total ?? 0}
+        perPage={Number(data?.per_page ?? perPage)}
+        perPageOptions={[6, 12, 24, 48]}
+        itemLabel="bukti"
+        onPageChange={setPage}
+        onPerPageChange={(nextPerPage) => {
+          setPerPage(nextPerPage);
+          setPage(1);
+        }}
+      />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto">

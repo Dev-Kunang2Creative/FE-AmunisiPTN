@@ -6,7 +6,6 @@ import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { participantsColumns } from "@/components/atoms/datacolumn/DataParticipants";
 import { useState } from "react";
 import { UserTryoutAccess } from "@/types/tryout/tryout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ExternalLink } from "lucide-react";
@@ -71,8 +70,6 @@ export default function DashboardAdminParticipantsWrapper({
 
   return (
     <section>
-      <Card>
-        <CardContent className="space-y-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h3 className="text-lg font-semibold">Daftar Peserta</h3>
@@ -114,8 +111,6 @@ export default function DashboardAdminParticipantsWrapper({
             data={accesses}
             isLoading={isPending}
           />
-        </CardContent>
-      </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto">

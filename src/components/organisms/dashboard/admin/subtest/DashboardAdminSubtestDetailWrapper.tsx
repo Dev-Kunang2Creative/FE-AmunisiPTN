@@ -225,8 +225,6 @@ export default function DashboardadminSubtestDetailWrapper({
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent>
           <div className="space-y-6">
             <AdminDataToolbar
               search={controls.search}
@@ -277,8 +275,6 @@ export default function DashboardadminSubtestDetailWrapper({
               isLoading={isPendingQuestion}
             />
           </div>
-        </CardContent>
-      </Card>
 
       {isSelectedDeleteQuestion && (
         <AlertDialogDeleteQuestion

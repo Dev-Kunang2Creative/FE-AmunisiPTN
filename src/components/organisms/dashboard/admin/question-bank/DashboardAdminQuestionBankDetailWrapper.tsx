@@ -3,7 +3,6 @@
 import AlertDialogDeleteQuestion from "@/components/atoms/alert-dialog/question/AlertDialogDeleteQuestion";
 import { questionColumns } from "@/components/atoms/datacolumn/DataQuestion";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useDeleteQuestion } from "@/http/questions/delete-question";
 import { useGetAllQuestionBySubtest } from "@/http/questions/get-all-question-by-subtest";
@@ -69,23 +68,19 @@ export default function DashboardAdminQuestionBankDetailWrapper({
 
   return (
     <section>
-      <Card>
-        <CardContent>
-          <div className="space-y-6">
-            <Input
-              placeholder="Cari berdasarkan pertanyaan..."
-              className="max-w-xs w-full"
-            />
-            <DataTable
-              columns={questionColumns({
-                deleteQuestionHandler,
-              })}
-              data={data?.data ?? []}
-              isLoading={isPending}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Input
+          placeholder="Cari berdasarkan pertanyaan..."
+          className="max-w-xs w-full"
+        />
+        <DataTable
+          columns={questionColumns({
+            deleteQuestionHandler,
+          })}
+          data={data?.data ?? []}
+          isLoading={isPending}
+        />
+      </div>
 
       {isSelectedDeleteQuestion && (
         <AlertDialogDeleteQuestion

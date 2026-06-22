@@ -6,7 +6,10 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState } from "react";
-import { GetAllKelasAdminForExportHandler, useGetAllKelasAdmin } from "@/http/kelas/get-all-kelas-admin";
+import {
+  GetAllKelasAdminForExportHandler,
+  useGetAllKelasAdmin,
+} from "@/http/kelas/get-all-kelas-admin";
 import { useDeleteKelasAdmin } from "@/http/kelas/delete-kelas-admin";
 import {
   AdminDataToolbar,
@@ -18,7 +21,13 @@ import {
 } from "@/components/molecules/datatable/AdminDataControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getErrorMessage } from "@/utils/get-error-message";
 import { Kelas } from "@/types/kelas/kelas";
 import {
@@ -31,21 +40,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
 
 const PAGE_SIZE_OPTIONS = [10, 15, 20, 50];
 const kelasExportColumns: AdminExportColumn<Kelas>[] = [
   { header: "Nama", accessor: (row) => row.name },
-  { header: "Harga", accessor: (row) => row.price, format: (value) => Number(value || 0) === 0 ? "Gratis" : `Rp${Number(value || 0).toLocaleString("id-ID")}` },
-  { header: "Diskon", accessor: (row) => row.discount_price, format: (value) => value == null ? "-" : `Rp${Number(value).toLocaleString("id-ID")}` },
+  {
+    header: "Harga",
+    accessor: (row) => row.price,
+    format: (value) =>
+      Number(value || 0) === 0
+        ? "Gratis"
+        : `Rp${Number(value || 0).toLocaleString("id-ID")}`,
+  },
+  {
+    header: "Diskon",
+    accessor: (row) => row.discount_price,
+    format: (value) =>
+      value == null ? "-" : `Rp${Number(value).toLocaleString("id-ID")}`,
+  },
   { header: "Tiket Bonus", accessor: (row) => row.ticket_amount },
   { header: "Peserta", accessor: (row) => row.enrollments_count ?? 0 },
-  { header: "Status", accessor: (row) => row.is_active ? "Aktif" : "Nonaktif" },
+  {
+    header: "Status",
+    accessor: (row) => (row.is_active ? "Aktif" : "Nonaktif"),
+  },
 ];
 const kelasSortOptions: AdminSortOption<Kelas>[] = [
-  { key: "newest", label: "Terbaru", compare: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
-  { key: "az", label: "Nama A-Z", compare: (a, b) => a.name.localeCompare(b.name, "id-ID") },
-  { key: "price-high", label: "Harga tertinggi", compare: (a, b) => Number(b.discount_price ?? b.price) - Number(a.discount_price ?? a.price) },
-  { key: "participants", label: "Peserta terbanyak", compare: (a, b) => (b.enrollments_count ?? 0) - (a.enrollments_count ?? 0) },
+  {
+    key: "newest",
+    label: "Terbaru",
+    compare: (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  },
+  {
+    key: "az",
+    label: "Nama A-Z",
+    compare: (a, b) => a.name.localeCompare(b.name, "id-ID"),
+  },
+  {
+    key: "price-high",
+    label: "Harga tertinggi",
+    compare: (a, b) =>
+      Number(b.discount_price ?? b.price) - Number(a.discount_price ?? a.price),
+  },
+  {
+    key: "participants",
+    label: "Peserta terbanyak",
+    compare: (a, b) => (b.enrollments_count ?? 0) - (a.enrollments_count ?? 0),
+  },
 ];
 
 export default function AdminKelasPage() {
@@ -58,7 +101,12 @@ export default function AdminKelasPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
-  const { data, isLoading } = useGetAllKelasAdmin({ token, page, perPage, search });
+  const { data, isLoading } = useGetAllKelasAdmin({
+    token,
+    page,
+    perPage,
+    search,
+  });
   const kelasList = data?.data ?? [];
   const kelasFilters: AdminFilterOption<Kelas>[] = [
     {
@@ -69,7 +117,7 @@ export default function AdminKelasPage() {
         { label: "Aktif", value: "active" },
         { label: "Nonaktif", value: "inactive" },
       ],
-      getValue: (row) => row.is_active ? "active" : "inactive",
+      getValue: (row) => (row.is_active ? "active" : "inactive"),
     },
   ];
   const controls = useAdminTableControls({
@@ -133,9 +181,7 @@ export default function AdminKelasPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-          Manajemen Kelas
-        </h1>
+        <DashboardTitle title="Kelas" />
         <Link href="/dashboard/admin/kelas/create">
           <Button className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -152,7 +198,9 @@ export default function AdminKelasPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
-        <Button type="submit" variant="outline">Cari</Button>
+        <Button type="submit" variant="outline">
+          Cari
+        </Button>
       </form>
       <AdminDataToolbar
         search={controls.search}
@@ -192,7 +240,9 @@ export default function AdminKelasPage() {
         ) : controls.rows.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <p className="text-base">
-              {search ? "Tidak ada kelas ditemukan." : "Belum ada kelas. Tambahkan kelas pertama!"}
+              {search
+                ? "Tidak ada kelas ditemukan."
+                : "Belum ada kelas. Tambahkan kelas pertama!"}
             </p>
           </div>
         ) : (
@@ -283,14 +333,19 @@ export default function AdminKelasPage() {
                 <span className="text-xs">Tampilkan</span>
                 <Select
                   value={String(perPage)}
-                  onValueChange={(v) => { setPerPage(Number(v)); setPage(1); }}
+                  onValueChange={(v) => {
+                    setPerPage(Number(v));
+                    setPage(1);
+                  }}
                 >
                   <SelectTrigger className="h-7 w-16 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {PAGE_SIZE_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={String(s)} className="text-xs">{s}</SelectItem>
+                      <SelectItem key={s} value={String(s)} className="text-xs">
+                        {s}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -313,7 +368,9 @@ export default function AdminKelasPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(data.last_page, p + 1))
+                  }
                   disabled={page === data.last_page}
                 >
                   <ChevronRight className="w-4 h-4" />

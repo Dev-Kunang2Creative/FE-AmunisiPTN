@@ -10,7 +10,6 @@ import {
   useAdminTableControls,
 } from "@/components/molecules/datatable/AdminDataControls";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
-import { Card, CardContent } from "@/components/ui/card";
 import { useDeleteQuestion } from "@/http/questions/delete-question";
 import { useGetAllQuestionBySubtest } from "@/http/questions/get-all-question-by-subtest";
 import { Question } from "@/types/questions/question";
@@ -124,8 +123,6 @@ export default function DashboardAdminQuestionSubtestTryoutWrapper({
   };
   return (
     <section>
-      <Card>
-        <CardContent>
           <div className="space-y-6">
             <AdminDataToolbar
               search={controls.search}
@@ -152,8 +149,6 @@ export default function DashboardAdminQuestionSubtestTryoutWrapper({
               isLoading={isPendingQuestion}
             />
           </div>
-        </CardContent>
-      </Card>
 
       {isSelectedDeleteQuestion && (
         <AlertDialogDeleteQuestion

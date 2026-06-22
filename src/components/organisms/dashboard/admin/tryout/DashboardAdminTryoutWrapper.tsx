@@ -11,7 +11,6 @@ import {
   useAdminTableControls,
 } from "@/components/molecules/datatable/AdminDataControls";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useDeleteTryout } from "@/http/tryout/delete-tryout";
 import { useGetAllTryout } from "@/http/tryout/get-all-tryout";
 import { Tryout } from "@/types/tryout/tryout";
@@ -25,18 +24,47 @@ import { toast } from "sonner";
 const tryoutExportColumns: AdminExportColumn<Tryout>[] = [
   { header: "Judul", accessor: (row) => row.title },
   { header: "Kategori", accessor: (row) => row.category },
-  { header: "Status", accessor: (row) => (row.is_published ? "Dipublish" : "Draft") },
+  {
+    header: "Status",
+    accessor: (row) => (row.is_published ? "Dipublish" : "Draft"),
+  },
   { header: "Tipe", accessor: (row) => (row.is_free ? "Gratis" : "Berbayar") },
   { header: "Peserta", accessor: (row) => row.user_accesses_count ?? 0 },
-  { header: "Tanggal Dibuat", accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID") },
+  {
+    header: "Tanggal Dibuat",
+    accessor: (row) => new Date(row.created_at).toLocaleDateString("id-ID"),
+  },
 ];
 
 const tryoutSortOptions: AdminSortOption<Tryout>[] = [
-  { key: "newest", label: "Terbaru", compare: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
-  { key: "oldest", label: "Terlama", compare: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime() },
-  { key: "az", label: "Judul A-Z", compare: (a, b) => a.title.localeCompare(b.title, "id-ID") },
-  { key: "za", label: "Judul Z-A", compare: (a, b) => b.title.localeCompare(a.title, "id-ID") },
-  { key: "participants", label: "Peserta terbanyak", compare: (a, b) => (b.user_accesses_count ?? 0) - (a.user_accesses_count ?? 0) },
+  {
+    key: "newest",
+    label: "Terbaru",
+    compare: (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  },
+  {
+    key: "oldest",
+    label: "Terlama",
+    compare: (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  },
+  {
+    key: "az",
+    label: "Judul A-Z",
+    compare: (a, b) => a.title.localeCompare(b.title, "id-ID"),
+  },
+  {
+    key: "za",
+    label: "Judul Z-A",
+    compare: (a, b) => b.title.localeCompare(a.title, "id-ID"),
+  },
+  {
+    key: "participants",
+    label: "Peserta terbanyak",
+    compare: (a, b) =>
+      (b.user_accesses_count ?? 0) - (a.user_accesses_count ?? 0),
+  },
 ];
 
 export default function DashboardAdminTryoutWrapper() {
@@ -59,7 +87,9 @@ export default function DashboardAdminTryoutWrapper() {
     },
   });
   const tryoutRows = data?.data ?? [];
-  const categoryOptions = Array.from(new Set(tryoutRows.map((item) => item.category).filter(Boolean)))
+  const categoryOptions = Array.from(
+    new Set(tryoutRows.map((item) => item.category).filter(Boolean)),
+  )
     .sort((a, b) => a.localeCompare(b, "id-ID"))
     .map((category) => ({ label: category, value: category }));
   const tryoutFilters: AdminFilterOption<Tryout>[] = [
@@ -93,7 +123,11 @@ export default function DashboardAdminTryoutWrapper() {
   ];
   const controls = useAdminTableControls({
     data: tryoutRows,
-    searchFields: [(row) => row.title, (row) => row.description, (row) => row.category],
+    searchFields: [
+      (row) => row.title,
+      (row) => row.description,
+      (row) => row.category,
+    ],
     filters: tryoutFilters,
     sortOptions: tryoutSortOptions,
     defaultSort: "newest",
@@ -127,43 +161,38 @@ export default function DashboardAdminTryoutWrapper() {
 
   return (
     <section>
-      <Card>
-        <CardContent>
-          <div className="space-y-6">
-            <AdminDataToolbar
-              search={controls.search}
-              onSearchChange={controls.setSearch}
-              searchPlaceholder="Cari judul, deskripsi, kategori..."
-              filters={tryoutFilters}
-              filterValues={controls.filterValues}
-              onFilterChange={controls.setFilter}
-              sortOptions={tryoutSortOptions}
-              sortKey={controls.sortKey}
-              onSortChange={controls.setSortKey}
-              onReset={controls.reset}
-              hasActiveControls={controls.hasActiveControls}
-              rows={controls.rows}
-              exportColumns={tryoutExportColumns}
-              exportTitle="laporan-tryout"
-              filterSummary={`Total hasil: ${controls.rows.length}`}
-            >
-              <Button size={"lg"} asChild>
-                <Link href="/dashboard/admin/try-out/create">
-                  <Plus /> Tambah Tryout
-                </Link>
-              </Button>
-            </AdminDataToolbar>
-            <DataTable
-              columns={tryoutColumns({
-                deleteTryoutHandler,
-              })}
-              data={controls.rows}
-              isLoading={isPending}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
+      <div className="space-y-6">
+        <AdminDataToolbar
+          search={controls.search}
+          onSearchChange={controls.setSearch}
+          searchPlaceholder="Cari judul, deskripsi, kategori..."
+          filters={tryoutFilters}
+          filterValues={controls.filterValues}
+          onFilterChange={controls.setFilter}
+          sortOptions={tryoutSortOptions}
+          sortKey={controls.sortKey}
+          onSortChange={controls.setSortKey}
+          onReset={controls.reset}
+          hasActiveControls={controls.hasActiveControls}
+          rows={controls.rows}
+          exportColumns={tryoutExportColumns}
+          exportTitle="laporan-tryout"
+          filterSummary={`Total hasil: ${controls.rows.length}`}
+        >
+          <Button asChild>
+            <Link href="/dashboard/admin/try-out/create">
+              <Plus className="mr-2 h-4 w-4" /> Tambah Tryout
+            </Link>
+          </Button>
+        </AdminDataToolbar>
+        <DataTable
+          columns={tryoutColumns({
+            deleteTryoutHandler,
+          })}
+          data={controls.rows}
+          isLoading={isPending}
+        />
+      </div>
       {isSelectedDeleteTryout && (
         <AlertDialogDeleteTryout
           open={isDialogDeleteOpen}

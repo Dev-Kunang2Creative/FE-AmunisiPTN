@@ -9,7 +9,6 @@ import {
   useAdminTableControls,
 } from "@/components/molecules/datatable/AdminDataControls";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
-import { Card, CardContent } from "@/components/ui/card";
 import { useGetAllSubtest } from "@/http/subtest/get-all-subtest";
 import { Subtest } from "@/types/subtest/subtest";
 import { useSession } from "next-auth/react";
@@ -57,8 +56,6 @@ export default function DashboardAdminQuestionBankWrapper() {
 
   return (
     <section>
-      <Card>
-        <CardContent>
           <div className="space-y-6">
             <AdminDataToolbar
               search={controls.search}
@@ -83,8 +80,6 @@ export default function DashboardAdminQuestionBankWrapper() {
               isLoading={isPending}
             />
           </div>
-        </CardContent>
-      </Card>
     </section>
   );
 }

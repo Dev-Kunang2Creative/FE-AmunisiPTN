@@ -55,7 +55,7 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
     id: "name",
     header: "Pengguna",
     cell: ({ row }) => (
-      <p suppressHydrationWarning className="max-w-xs truncate font-medium">
+      <p suppressHydrationWarning className="max-w-xs truncate">
         {row.original.user.name}
       </p>
     ),
@@ -79,10 +79,7 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
     id: "grand_total",
     header: "Total",
     cell: ({ row }) => (
-      <p
-        suppressHydrationWarning
-        className="font-semibold text-sm whitespace-nowrap"
-      >
+      <p suppressHydrationWarning className="whitespace-nowrap">
         {formatCurrency(row.original.grand_total, row.original.currency)}
       </p>
     ),
