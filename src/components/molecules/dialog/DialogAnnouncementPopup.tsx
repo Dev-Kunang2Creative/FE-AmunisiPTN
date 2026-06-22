@@ -36,7 +36,7 @@ export default function DialogAnnouncementPopup() {
     >
       <DialogContent 
         showCloseButton={false}
-        className="sm:max-w-md p-0 overflow-hidden bg-white gap-0 border-none max-h-[90vh] flex flex-col"
+        className="sm:max-w-sm p-0 overflow-hidden bg-white gap-0 border-none flex flex-col"
       >
         <DialogClose asChild>
           <Button
@@ -48,9 +48,9 @@ export default function DialogAnnouncementPopup() {
           </Button>
         </DialogClose>
 
-        <div className="overflow-y-auto">
-          <div className="p-4 sm:p-6 pb-0">
-            <div className="w-full relative rounded-lg overflow-hidden" style={{ aspectRatio: '4/5' }}>
+        <div className="overflow-y-auto flex flex-col h-full max-h-[85vh]">
+          <div className="p-4 pb-0 flex-shrink-0 flex justify-center">
+            <div className="w-full max-w-[280px] sm:max-w-[320px] relative rounded-lg overflow-hidden" style={{ aspectRatio: '4/5' }}>
               <Image
                 src="/images/pop_up.png"
                 alt="Pengumuman AmunisiPTN"
@@ -61,14 +61,10 @@ export default function DialogAnnouncementPopup() {
             </div>
           </div>
 
-          <div className="p-4 sm:p-6 space-y-6">
-            <div className="space-y-4 text-xs sm:text-[13px] text-gray-700 leading-relaxed">
+          <div className="p-4 space-y-4 flex-grow flex flex-col justify-end">
+            <div className="text-[11px] text-gray-700 leading-relaxed text-justify">
               <p>
-                <strong>+1 Tiket kompensasi</strong> hanya diberikan kepada pengguna yang telah melakukan transaksi sebelum <strong>20 Juni 2026</strong>. Namun tenang! 🎉 Kamu tetap bisa mendapatkan tiket tambahan melalui giveaway dengan memasukkan kode di atas. Buka halaman <strong>Try Out</strong>, lalu klik <strong>Redeem Akses</strong> untuk menukarkan kode.
-              </p>
-
-              <p>
-                Kami juga sangat membutuhkan masukan dari para <strong>Amunisian</strong> 💙. Jika memiliki saran, kritik, atau mengalami kendala saat menggunakan platform, silakan isi <strong>Form Feedback</strong> dan <strong>Form Aduan Kendala</strong> melalui tombol di bawah. Dukungan dan masukan kalian sangat berarti bagi pengembangan <strong>AmunisiPTN</strong>. 🚀
+                🎉 <strong>+1 Tiket kompensasi</strong> diberikan untuk pengguna yang telah bertransaksi sebelum <strong>20 Juni 2026</strong>. Belum memenuhi syarat? Tenang, kamu tetap bisa mendapatkan tiket tambahan melalui giveaway dengan menukarkan kode di atas di menu <strong>Try Out → Redeem Akses</strong>. Jangan lupa juga isi <strong>Form Feedback</strong> atau <strong>Form Aduan Kendala</strong> melalui tombol di bawah ya 💙. Masukan dari para Amunisian sangat membantu kami dalam mengembangkan <strong>AmunisiPTN</strong> menjadi lebih baik! 🚀
               </p>
             </div>
 
