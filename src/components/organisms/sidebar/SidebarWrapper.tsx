@@ -44,6 +44,7 @@ import {
   Ticket,
   Images,
   MessageSquareWarning,
+  Bug,
 } from "lucide-react";
 import { SidebarUser } from "./SidebarUser";
 import { DASHBOARD_MENU } from "@/constants/dashboard-menu";
@@ -228,6 +229,37 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={buttonClass("/dashboard/admin/ticket-report")}
+                    >
+                      <Link href="/dashboard/admin/ticket-report">
+                        <Bug />
+                        <span>Ticket Report</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={buttonClass("/dashboard/admin/audit-log")}
+                    >
+                      <Link href="/dashboard/admin/audit-log">
+                        <Shield />
+                        <span>Log Audit</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Manajemen Keuangan</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
@@ -247,17 +279,6 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                       <Link href="/dashboard/admin/sales-report">
                         <TrendingUp />
                         <span>Laporan Penjualan</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      className={buttonClass("/dashboard/admin/audit-log")}
-                    >
-                      <Link href="/dashboard/admin/audit-log">
-                        <Shield />
-                        <span>Log Audit</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -282,13 +303,16 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                           : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                       }`}
                     >
-                      <Link href="/dashboard" className="flex items-center w-full gap-3">
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center w-full gap-3"
+                      >
                         <Home className="w-5 h-5 shrink-0" />
                         <span>Beranda</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  
+
                   <SidebarMenuItem className="w-full relative">
                     <SidebarMenuButton
                       asChild
@@ -298,7 +322,10 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                           : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                       }`}
                     >
-                      <Link href="/dashboard/try-out" className="flex items-center w-full gap-3">
+                      <Link
+                        href="/dashboard/try-out"
+                        className="flex items-center w-full gap-3"
+                      >
                         <BookOpen className="w-5 h-5 shrink-0" />
                         <span>Try Out</span>
                       </Link>
@@ -314,7 +341,10 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                           : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                       }`}
                     >
-                      <Link href="/dashboard/kelas" className="flex items-center w-full gap-3">
+                      <Link
+                        href="/dashboard/kelas"
+                        className="flex items-center w-full gap-3"
+                      >
                         <GraduationCap className="w-5 h-5 shrink-0" />
                         <span>Kelas</span>
                       </Link>
@@ -330,7 +360,10 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                           : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                       }`}
                     >
-                      <Link href="/dashboard/pembelian" className="flex items-center w-full gap-3">
+                      <Link
+                        href="/dashboard/pembelian"
+                        className="flex items-center w-full gap-3"
+                      >
                         <ShoppingCart className="w-5 h-5 shrink-0" />
                         <span>Pembelian</span>
                       </Link>
@@ -346,7 +379,10 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                           : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                       }`}
                     >
-                      <Link href="/dashboard/tiket/riwayat" className="flex items-center w-full gap-3">
+                      <Link
+                        href="/dashboard/tiket/riwayat"
+                        className="flex items-center w-full gap-3"
+                      >
                         <Ticket className="w-5 h-5 shrink-0" />
                         <span>Riwayat Tiket</span>
                       </Link>
@@ -356,11 +392,30 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem className="w-full relative">
                     <SidebarMenuButton
                       asChild
+                      className={`h-11 justify-start px-4 rounded-xl transition-all w-full flex items-center ${
+                        pathname.startsWith("/dashboard/ticket-report")
+                          ? "bg-[#EBF4FF] text-[#004AAB] font-semibold"
+                          : "text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
+                      }`}
+                    >
+                      <Link
+                        href="/dashboard/ticket-report"
+                        className="flex items-center w-full gap-3"
+                      >
+                        <Bug className="w-5 h-5 shrink-0" />
+                        <span>Laporan Masalah</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem className="w-full relative">
+                    <SidebarMenuButton
+                      asChild
                       className="h-11 justify-start px-4 rounded-xl transition-all w-full flex items-center text-[#9695A5] hover:bg-[#EBF4FF] hover:text-[#004AAB]"
                     >
-                      <Link 
-                        href="https://docs.google.com/forms/d/e/1FAIpQLSf8rup9kdF3KmFViVTYktraeGo43zuY7m_TXtu0Et2ea4RrVQ/viewform?usp=publish-editor" 
-                        target="_blank" 
+                      <Link
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSf8rup9kdF3KmFViVTYktraeGo43zuY7m_TXtu0Et2ea4RrVQ/viewform?usp=publish-editor"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center w-full gap-3"
                       >
@@ -384,8 +439,6 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
             </SidebarGroup>
           </>
         )}
-
-
       </SidebarContent>
 
       {session?.user.role === "admin" && (
@@ -402,7 +455,8 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
               Pusat Bantuan
             </DialogTitle>
             <DialogDescription>
-              Kamu akan diarahkan ke WhatsApp untuk menghubungi tim kami. Lanjutkan?
+              Kamu akan diarahkan ke WhatsApp untuk menghubungi tim kami.
+              Lanjutkan?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-row justify-end gap-2 sm:gap-2">
@@ -412,7 +466,11 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
             <Button
               className="bg-[#25D366] hover:bg-[#1ebe5d] text-white"
               onClick={() => {
-                window.open("https://wa.me/6281398169073", "_blank", "noopener,noreferrer");
+                window.open(
+                  "https://wa.me/6281398169073",
+                  "_blank",
+                  "noopener,noreferrer",
+                );
                 setWaModalOpen(false);
               }}
             >
