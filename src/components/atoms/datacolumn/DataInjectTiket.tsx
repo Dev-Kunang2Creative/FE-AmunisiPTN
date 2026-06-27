@@ -24,7 +24,7 @@ export const ticketLogColumns = ({
   {
     id: "no",
     header: "No",
-    cell: ({ row }) => (historyPage - 1) * historyPerPage + row.index + 1,
+    cell: ({ row }) => row.index + 1,
   },
   {
     accessorKey: "created_at",
@@ -90,7 +90,7 @@ export const vipUserColumns = ({
   {
     id: "no",
     header: "No",
-    cell: ({ row }) => (page - 1) * perPage + row.index + 1,
+    cell: ({ row }) => row.index + 1,
   },
   {
     accessorKey: "name",
@@ -139,7 +139,7 @@ export const vipUserColumns = ({
     cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="h-5 w-5 p-0">
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>

@@ -188,14 +188,24 @@ export function DataTable<TData, TValue>({
                     index % 2 === 0 ? "table-row-even" : "table-row-odd"
                   }`}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const context = cell.getContext();
+                    const rowProxy = Object.create(context.row);
+                    rowProxy.index = activePageIndex * activePageSize + index;
+                    const modifiedContext = {
+                      ...context,
+                      row: rowProxy,
+                    };
+
+                    return (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          modifiedContext,
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

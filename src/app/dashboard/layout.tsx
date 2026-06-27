@@ -4,8 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SidebarWrapper } from "@/components/organisms/sidebar/SidebarWrapper";
 import { BreadcrumbProvider } from "@/components/atoms/breadcrumb/BreadcrumbContext";
-import BreadcrumbNav from "@/components/atoms/breadcrumb/BreadcrumbNav";
 import DashboardTopBar from "@/components/molecules/dashboard/DashboardTopBar";
+import SidebarHeader from "@/components/organisms/sidebar/SidebarHeader";
+import BreadcrumbNav from "@/components/atoms/breadcrumb/BreadcrumbNav";
 
 export default async function DashboardLayout({
   children,
@@ -18,14 +19,22 @@ export default async function DashboardLayout({
   const isAdmin = session.user.role === "admin";
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
       <SidebarWrapper session={session!} />
 
       <SidebarInset className="min-w-0">
         {isAdmin ? (
           <BreadcrumbProvider>
+            <SidebarHeader />
             <BreadcrumbNav />
-            <main className="min-w-0 px-5 pt-20 pb-6 md:pt-10 flex-col bg-white min-h-screen">
+            <main className="min-w-0 px-5 pt-20 pb-6 md:pt-10 flex-col h-full rounded-b-xl overflow-hidden">
               {children}
             </main>
           </BreadcrumbProvider>

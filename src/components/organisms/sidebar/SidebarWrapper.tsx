@@ -43,8 +43,6 @@ import {
   LifeBuoy,
   Ticket,
   Images,
-  MessageSquareWarning,
-  Bug,
   ClipboardX,
 } from "lucide-react";
 import { SidebarUser } from "./SidebarUser";
@@ -71,20 +69,37 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
         : ""
     }`;
 
+  const isAdmin = session?.user.role === "admin";
+
   return (
-    <Sidebar>
+    <Sidebar
+      collapsible={isAdmin ? "icon" : "offcanvas"}
+      variant={isAdmin ? "inset" : "sidebar"}
+      className={isAdmin ? "bg-sidebar border-r-0" : ""}
+    >
       {/* Header */}
-      <SidebarHeader className="h-18 cursor-default justify-center bg-white dark:bg-slate-950">
+      <SidebarHeader
+        className={`h-18 cursor-default justify-center ${
+          isAdmin ? "bg-sidebar" : "bg-white dark:bg-slate-950"
+        }`}
+      >
         <SidebarMenu>
-          <SidebarMenuItem className="flex justify-start px-6 pt-2 w-full">
-            <div className="flex items-center gap-x-3 w-full">
-              <Link href="/dashboard" className="flex items-center gap-2">
+          <SidebarMenuItem className="flex justify-start group-data-[collapsible=icon]:justify-center px-6 group-data-[collapsible=icon]:px-0 pt-2 w-full">
+            <div className="flex items-center justify-center group-data-[collapsible=icon]:gap-0 gap-x-3 w-full">
+              <Link href="/dashboard" className="flex w-full">
                 <Image
                   src={"/images/logo/amunisiptn-blue.png"}
                   alt="Amunisi PTN"
-                  width={150}
+                  width={135}
+                  height={24}
+                  className="object-contain group-data-[collapsible=icon]:hidden"
+                />
+                <Image
+                  src={"/images/logo/icon.png"}
+                  alt="Amunisi PTN Icon"
+                  width={32}
                   height={32}
-                  className="object-contain"
+                  className="object-contain hidden group-data-[collapsible=icon]:block"
                 />
               </Link>
             </div>
@@ -92,7 +107,9 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="bg-white dark:bg-slate-950">
+      <SidebarContent
+        className={isAdmin ? "bg-sidebar" : "bg-white dark:bg-slate-950"}
+      >
         {session?.user.role === "admin" && (
           <SidebarGroup>
             <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -101,6 +118,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
+                    tooltip={menu.label}
                     className={`hover:bg-primary/10 hover:text-primary dark:hover:bg-slate-900 ${
                       pathname === menu.href
                         ? "bg-primary/10 text-primary dark:bg-slate-800"
@@ -126,6 +144,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Subtes"
                       className={buttonClass("/dashboard/admin/subtest")}
                     >
                       <Link href="/dashboard/admin/subtest">
@@ -137,6 +156,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Try Out"
                       className={buttonClass("/dashboard/admin/try-out")}
                     >
                       <Link href="/dashboard/admin/try-out">
@@ -148,6 +168,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Bukti Follow"
                       className={buttonClass("/dashboard/admin/bukti-follow")}
                     >
                       <Link href="/dashboard/admin/bukti-follow">
@@ -159,6 +180,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Bank Soal"
                       className={buttonClass("/dashboard/admin/question-bank")}
                     >
                       <Link href="/dashboard/admin/question-bank">
@@ -178,6 +200,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Pengguna"
                       className={buttonClass("/dashboard/admin/users")}
                     >
                       <Link href="/dashboard/admin/users">
@@ -189,6 +212,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Inject Tiket"
                       className={buttonClass("/dashboard/admin/inject-tiket")}
                     >
                       <Link href="/dashboard/admin/inject-tiket">
@@ -200,6 +224,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Paket"
                       className={buttonClass("/dashboard/admin/packages")}
                     >
                       <Link href="/dashboard/admin/packages">
@@ -211,6 +236,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Kode Redeem"
                       className={buttonClass("/dashboard/admin/redeem-code")}
                     >
                       <Link href="/dashboard/admin/redeem-code">
@@ -222,6 +248,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Kelas"
                       className={buttonClass("/dashboard/admin/kelas")}
                     >
                       <Link href="/dashboard/admin/kelas">
@@ -234,6 +261,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Laporan Masalah"
                       className={buttonClass("/dashboard/admin/ticket-report")}
                     >
                       <Link href="/dashboard/admin/ticket-report">
@@ -245,6 +273,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Log Audit"
                       className={buttonClass("/dashboard/admin/audit-log")}
                     >
                       <Link href="/dashboard/admin/audit-log">
@@ -264,6 +293,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Riwayat Transaksi"
                       className={buttonClass("/dashboard/admin/transactions")}
                     >
                       <Link href="/dashboard/admin/transactions">
@@ -275,6 +305,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
+                      tooltip="Laporan Penjualan"
                       className={buttonClass("/dashboard/admin/sales-report")}
                     >
                       <Link href="/dashboard/admin/sales-report">
@@ -442,8 +473,8 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
         )}
       </SidebarContent>
 
-      {session?.user.role === "admin" && (
-        <SidebarFooter className="bg-white">
+      {isAdmin && (
+        <SidebarFooter className="bg-sidebar">
           <SidebarUser session={session} />
         </SidebarFooter>
       )}
