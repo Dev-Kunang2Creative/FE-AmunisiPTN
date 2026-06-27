@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import AdminBackButton from "@/components/atoms/navigation/AdminBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -54,10 +52,6 @@ export default function DashboardTitle({
             )}
             <h1 className="text-4xl font-extrabold">{title}</h1>
           </div>
-
-          <p className="text-muted-foreground ml-1" suppressHydrationWarning>
-            {format(time, "EEEE, d MMMM yyyy, HH:mm:ss", { locale: id })}
-          </p>
         </>
       )}
     </div>
