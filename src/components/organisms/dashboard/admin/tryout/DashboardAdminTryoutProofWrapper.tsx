@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { ExternalLink, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import SmartPagination from "@/components/molecules/pagination/SmartPagination";
+
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { proofsColumns } from "@/components/atoms/datacolumn/DataProofs";
 import {
@@ -64,18 +64,14 @@ export default function DashboardAdminTryoutProofWrapper() {
         columns={proofsColumns({ viewDetailHandler: handleViewDetail })}
         data={rows}
         isLoading={isPending}
-        disablePagination={true}
-      />
-
-      <SmartPagination
-        page={data?.current_page ?? page}
-        totalItems={data?.total ?? 0}
-        perPage={Number(data?.per_page ?? perPage)}
-        perPageOptions={[6, 12, 24, 48]}
-        itemLabel="bukti"
-        onPageChange={setPage}
-        onPerPageChange={(nextPerPage) => {
-          setPerPage(nextPerPage);
+        serverSidePagination={true}
+        serverPageCount={data?.last_page ?? 1}
+        serverTotalData={data?.total ?? 0}
+        serverPageIndex={page - 1}
+        serverPageSize={perPage}
+        onServerPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
+        onServerPageSizeChange={(newSize) => {
+          setPerPage(newSize);
           setPage(1);
         }}
       />

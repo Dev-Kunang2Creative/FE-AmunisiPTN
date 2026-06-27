@@ -20,17 +20,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -41,6 +39,14 @@ interface DataTableProps<TData, TValue> {
   defaultPageSize?: number;
   disablePagination?: boolean;
   tableFooter?: React.ReactNode;
+
+  serverSidePagination?: boolean;
+  serverPageCount?: number;
+  serverTotalData?: number;
+  serverPageIndex?: number;
+  serverPageSize?: number;
+  onServerPageChange?: (pageIndex: number) => void;
+  onServerPageSizeChange?: (pageSize: number) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -52,12 +58,39 @@ export function DataTable<TData, TValue>({
   defaultPageSize = 10,
   disablePagination = false,
   tableFooter,
+
+  serverSidePagination = false,
+  serverPageCount = 1,
+  serverTotalData = 0,
+  serverPageIndex = 0,
+  serverPageSize = 10,
+  onServerPageChange,
+  onServerPageSizeChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pageSize, setPageSize] = React.useState(defaultPageSize);
   const [pageIndex, setPageIndex] = React.useState(0);
 
-  const effectivePageSize = disablePagination ? 9999 : pageSize;
+  const activePageIndex = serverSidePagination ? serverPageIndex : pageIndex;
+  const activePageSize = serverSidePagination ? serverPageSize : pageSize;
+  const effectivePageSize = disablePagination ? 9999 : activePageSize;
+
+  const handlePageChange = (newPageIndex: number) => {
+    if (serverSidePagination && onServerPageChange) {
+      onServerPageChange(newPageIndex);
+    } else {
+      setPageIndex(newPageIndex);
+    }
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    if (serverSidePagination && onServerPageSizeChange) {
+      onServerPageSizeChange(newPageSize);
+    } else {
+      setPageSize(newPageSize);
+      setPageIndex(0);
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -69,7 +102,7 @@ export function DataTable<TData, TValue>({
     state: {
       sorting,
       pagination: {
-        pageIndex: disablePagination ? 0 : pageIndex,
+        pageIndex: disablePagination ? 0 : activePageIndex,
         pageSize: effectivePageSize,
       },
     },
@@ -77,26 +110,34 @@ export function DataTable<TData, TValue>({
       if (disablePagination) return;
       const next =
         typeof updater === "function"
-          ? updater({ pageIndex, pageSize })
+          ? updater({ pageIndex: activePageIndex, pageSize: effectivePageSize })
           : updater;
-      setPageIndex(next.pageIndex);
-      setPageSize(next.pageSize);
+      handlePageChange(next.pageIndex);
+      if (next.pageSize !== effectivePageSize) {
+        handlePageSizeChange(next.pageSize);
+      }
     },
-    manualPagination: false,
+    manualPagination: serverSidePagination,
+    pageCount: serverSidePagination ? serverPageCount : undefined,
   });
 
-  // Reset ke halaman 1 jika data berubah
+  // Reset ke halaman 1 jika data berubah dan bukan server side
   React.useEffect(() => {
-    setPageIndex(0);
-  }, [data]);
+    if (!serverSidePagination) {
+      setPageIndex(0);
+    }
+  }, [data, serverSidePagination]);
 
-  const pageCount = table.getPageCount();
-  const currentPage = pageIndex + 1;
-  const from = pageIndex * pageSize + 1;
-  const to = Math.min((pageIndex + 1) * pageSize, data.length);
+  const pageCountToUse = serverSidePagination
+    ? serverPageCount
+    : table.getPageCount();
+  const currentPageToUse = activePageIndex + 1;
+  const totalDataCount = serverSidePagination ? serverTotalData : data.length;
+  const from = activePageIndex * activePageSize + 1;
+  const to = Math.min((activePageIndex + 1) * activePageSize, totalDataCount);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div className="rounded-xl border overflow-x-auto">
         <Table className="min-w-max">
           <TableHeader className="table-header">
@@ -172,70 +213,107 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      {/* Footer: page size + pagination */}
-      {!isLoading && data.length > 0 && !disablePagination && (
+      {!isLoading && totalDataCount > 0 && !disablePagination && (
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Info + page size */}
-          <div className="flex items-center gap-3 text-sm text-gray-500">
+          <div className="flex items-center gap-3 text-sm">
             <span>
-              {data.length > 0
-                ? `Menampilkan ${from}–${to} dari ${data.length} data`
+              {totalDataCount > 0
+                ? `Menampilkan ${from}–${to} dari ${totalDataCount} data`
                 : "Tidak ada data"}
             </span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs">Tampilkan</span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => {
-                  setPageSize(Number(v));
-                  setPageIndex(0);
-                }}
-              >
-                <SelectTrigger className="h-7 w-16 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAGE_SIZE_OPTIONS.map((size) => (
-                    <SelectItem
-                      key={size}
-                      value={String(size)}
-                      className="text-xs"
-                    >
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="text-xs">per halaman</span>
-            </div>
           </div>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent className="gap-2">
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (activePageIndex > 0)
+                      handlePageChange(Math.max(0, activePageIndex - 1));
+                  }}
+                  className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                    activePageIndex === 0
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }`}
+                />
+              </PaginationItem>
 
-          {/* Prev / Next */}
-          {pageCount > 1 && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
-                disabled={pageIndex === 0}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm text-gray-600 min-w-20 text-center">
-                {currentPage} / {pageCount}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setPageIndex((p) => Math.min(pageCount - 1, p + 1))
-                }
-                disabled={pageIndex >= pageCount - 1}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+              {(() => {
+                const getPaginationItems = (current: number, total: number) => {
+                  if (total <= 6) {
+                    return Array.from({ length: total }, (_, i) => i + 1);
+                  }
+                  if (current <= 3) {
+                    return [1, 2, 3, "...", total - 1, total];
+                  }
+                  if (current >= total - 2) {
+                    return [1, 2, "...", total - 2, total - 1, total];
+                  }
+                  return [
+                    1,
+                    "...",
+                    current - 1,
+                    current,
+                    current + 1,
+                    "...",
+                    total,
+                  ];
+                };
+
+                return getPaginationItems(currentPageToUse, pageCountToUse).map(
+                  (page, i) => {
+                    if (page === "...") {
+                      return (
+                        <PaginationItem key={i}>
+                          <PaginationEllipsis className="h-9 w-9" />
+                        </PaginationItem>
+                      );
+                    }
+                    const isCurrent = page === currentPageToUse;
+                    return (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange((page as number) - 1);
+                          }}
+                          isActive={isCurrent}
+                          className={`h-9 w-9 p-0 cursor-pointer border ${
+                            isCurrent
+                              ? "bg-primary text-white hover:bg-primary border-primary hover:text-white"
+                              : "text-gray-900 border-primary/60 hover:bg-primary/10"
+                          }`}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  },
+                );
+              })()}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (activePageIndex < pageCountToUse - 1)
+                      handlePageChange(
+                        Math.min(pageCountToUse - 1, activePageIndex + 1),
+                      );
+                  }}
+                  className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                    activePageIndex >= pageCountToUse - 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }`}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

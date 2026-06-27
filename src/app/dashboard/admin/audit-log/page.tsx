@@ -247,43 +247,13 @@ export default function AuditLogPage() {
         columns={auditLogColumns}
         data={data?.data ?? []}
         isLoading={isLoading}
-        disablePagination={true}
+        serverSidePagination={true}
+        serverPageCount={data?.last_page ?? 1}
+        serverTotalData={data?.total ?? 0}
+        serverPageIndex={page - 1}
+        serverPageSize={data?.per_page ?? 15}
+        onServerPageChange={(newPageIndex) => updatePage(newPageIndex + 1)}
       />
-
-      {data && data.total > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Menampilkan {(data.current_page - 1) * data.per_page + 1} –{" "}
-            {Math.min(data.current_page * data.per_page, data.total)} dari{" "}
-            {data.total} data
-          </p>
-          {data.last_page > 1 && (
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-md"
-                onClick={() => updatePage(Math.max(1, page - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="flex items-center px-2 text-sm text-muted-foreground">
-                Page {data.current_page} of {data.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-md"
-                onClick={() => updatePage(Math.min(data.last_page, page + 1))}
-                disabled={page === data.last_page}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </main>
   );
 }

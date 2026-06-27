@@ -41,8 +41,8 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
         <Badge
           className={
             isAdmin
-              ? "bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs"
-              : "bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs"
+              ? "bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs uppercase"
+              : "bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs uppercase"
           }
         >
           {isAdmin ? "Admin" : "Siswa"}
@@ -72,13 +72,6 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
     header: "Asal Sekolah",
     cell: ({ row }) => (
       <p suppressHydrationWarning>{row.original.school_origin || "-"}</p>
-    ),
-  },
-  {
-    id: "grade_level",
-    header: "Kelas",
-    cell: ({ row }) => (
-      <p suppressHydrationWarning>{row.original.grade_level || "-"}</p>
     ),
   },
   {

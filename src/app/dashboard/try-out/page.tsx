@@ -8,7 +8,15 @@ import { useSession } from "next-auth/react";
 import { useGetUserTryouts } from "@/http/tryout/get-user-tryouts";
 import { useGetHistoryTryout } from "@/http/tryout/get-history-tryout";
 import DialogRedeemCode from "@/components/molecules/dialog/DialogRedeemCode";
-import SmartPagination from "@/components/molecules/pagination/SmartPagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -179,7 +187,7 @@ export default function TryoutPage() {
             className="flex items-center gap-2 bg-[#004AAB] hover:bg-[#003B8A] text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors w-fit"
           >
             <KeyRound className="w-4 h-4" />
-            <span>Kode Akses</span>
+            <span>Redeem Kode</span>
           </button>
           <Link
             href="/dashboard/try-out/riwayat"
@@ -288,15 +296,110 @@ export default function TryoutPage() {
               ))}
             </div>
 
-            <SmartPagination
-              page={safeCurrentPage}
-              totalItems={filteredData.length}
-              perPage={itemsPerPage}
-              perPageOptions={PER_PAGE_OPTIONS}
-              itemLabel="tryout"
-              onPageChange={setCurrentPage}
-              onPerPageChange={handleItemsPerPageChange}
-            />
+            <div className="flex items-center justify-between gap-4 flex-wrap mt-8">
+              <div className="flex items-center gap-3 text-sm">
+                <span>
+                  {filteredData.length > 0
+                    ? `Menampilkan ${(safeCurrentPage - 1) * itemsPerPage + 1}–${Math.min(safeCurrentPage * itemsPerPage, filteredData.length)} dari ${filteredData.length} data`
+                    : "Tidak ada data"}
+                </span>
+              </div>
+              <Pagination className="mx-0 w-auto">
+                <PaginationContent className="gap-2">
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (safeCurrentPage > 1)
+                          setCurrentPage(Math.max(1, safeCurrentPage - 1));
+                      }}
+                      className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                        safeCurrentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+
+                  {(() => {
+                    const getPaginationItems = (
+                      current: number,
+                      total: number,
+                    ) => {
+                      if (total <= 6) {
+                        return Array.from({ length: total }, (_, i) => i + 1);
+                      }
+                      if (current <= 3) {
+                        return [1, 2, 3, "...", total - 1, total];
+                      }
+                      if (current >= total - 2) {
+                        return [1, 2, "...", total - 2, total - 1, total];
+                      }
+                      return [
+                        1,
+                        "...",
+                        current - 1,
+                        current,
+                        current + 1,
+                        "...",
+                        total,
+                      ];
+                    };
+
+                    return getPaginationItems(safeCurrentPage, totalPages).map(
+                      (page, i) => {
+                        if (page === "...") {
+                          return (
+                            <PaginationItem key={i}>
+                              <PaginationEllipsis className="h-9 w-9" />
+                            </PaginationItem>
+                          );
+                        }
+                        const isCurrent = page === safeCurrentPage;
+                        return (
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page as number);
+                              }}
+                              isActive={isCurrent}
+                              className={`h-9 w-9 p-0 cursor-pointer border ${
+                                isCurrent
+                                  ? "bg-primary text-white hover:bg-primary border-primary hover:text-white"
+                                  : "text-gray-900 border-primary/60 hover:bg-primary/10"
+                              }`}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      },
+                    );
+                  })()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (safeCurrentPage < totalPages)
+                          setCurrentPage(
+                            Math.min(totalPages, safeCurrentPage + 1),
+                          );
+                      }}
+                      className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                        safeCurrentPage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           </>
         ) : (
           <div className="w-full py-12 flex flex-col items-center justify-center text-gray-500">

@@ -11,22 +11,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Ticket, Gift, MoreHorizontal, History } from "lucide-react";
+import { Ticket } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useGetVipUsers } from "@/http/users/get-vip-users";
 import { useInjectVipTickets } from "@/http/users/inject-vip-tickets";
-import { useGetUserTicketLogs, TicketLog } from "@/http/users/get-user-ticket-logs";
+import {
+  useGetUserTicketLogs,
+  TicketLog,
+} from "@/http/users/get-user-ticket-logs";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
-import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user/user";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ticketLogColumns,
+  vipUserColumns,
+} from "@/components/atoms/datacolumn/DataInjectTiket";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +45,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
-const PAGE_SIZE_OPTIONS = [10, 20, 40, 100];
 
 export default function DashboardInjectTiketWrapper() {
   const { data: session, status } = useSession();
@@ -123,138 +121,14 @@ export default function DashboardInjectTiketWrapper() {
     },
   });
 
-  const { data: historyData, isPending: isHistoryPending } = useGetUserTicketLogs({
-    userId: selectedUser?.id || "",
-    page: historyPage,
-    perPage: historyPerPage,
-    token,
-    options: { enabled: !!selectedUser && isHistoryModalOpen },
-  });
-
-  const ticketLogColumns: ColumnDef<TicketLog>[] = [
-    {
-      id: "no",
-      header: "No",
-      cell: ({ row }) => (historyPage - 1) * historyPerPage + row.index + 1,
-    },
-    {
-      accessorKey: "created_at",
-      header: "Tanggal",
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleString("id-ID"),
-    },
-    {
-      accessorKey: "type",
-      header: "Tipe",
-      cell: ({ row }) => {
-        const isCredit = row.original.type === "credit";
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${isCredit ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-            {isCredit ? "Masuk" : "Keluar"}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "amount",
-      header: "Jumlah",
-      cell: ({ row }) => (
-        <span className={row.original.type === "credit" ? "text-green-600" : "text-red-600"}>
-          {row.original.type === "credit" ? "+" : "-"}{row.original.amount}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "description",
-      header: "Keterangan",
-    },
-  ];
-
-  const vipUserColumns: ColumnDef<User>[] = [
-    {
-      id: "no",
-      header: "No",
-      cell: ({ row }) => (page - 1) * perPage + row.index + 1,
-    },
-    {
-      accessorKey: "name",
-      header: "Nama",
-      cell: ({ row }) => <span>{row.original.name}</span>,
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-    },
-    {
-      accessorKey: "ticket_balance",
-      header: "Saldo Tiket",
-    },
-    {
-      accessorKey: "total_tickets_in",
-      header: "Masuk",
-      cell: ({ row }) => <span className="text-green-600">+{row.original.total_tickets_in || 0}</span>,
-    },
-    {
-      accessorKey: "total_tickets_out",
-      header: "Keluar",
-      cell: ({ row }) => <span className="text-red-600">-{row.original.total_tickets_out || 0}</span>,
-    },
-    {
-      accessorKey: "last_transaction_date",
-      header: "Transaksi Terakhir",
-      cell: ({ row }) =>
-        row.original.last_transaction_date
-          ? new Date(row.original.last_transaction_date).toLocaleDateString(
-              "id-ID",
-            )
-          : "-",
-    },
-    {
-      id: "actions",
-      header: "Aksi",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedUser(row.original);
-                setHistoryPage(1);
-                setIsHistoryModalOpen(true);
-              }}
-            >
-              <History className="mr-2 h-4 w-4" />
-              <span>Riwayat Tiket</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedUser(row.original);
-                setSingleMode("inject");
-                setIsSingleModalOpen(true);
-              }}
-            >
-              <Ticket className="mr-2 h-4 w-4 text-green-600" />
-              <span>Inject Tiket</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedUser(row.original);
-                setSingleMode("pull");
-                setIsSingleModalOpen(true);
-              }}
-            >
-              <Ticket className="mr-2 h-4 w-4 text-red-600" />
-              <span className="text-red-600">Tarik Tiket</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
+  const { data: historyData, isPending: isHistoryPending } =
+    useGetUserTicketLogs({
+      userId: selectedUser?.id || "",
+      page: historyPage,
+      perPage: historyPerPage,
+      token,
+      options: { enabled: !!selectedUser && isHistoryModalOpen },
+    });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -382,79 +256,41 @@ export default function DashboardInjectTiketWrapper() {
         </div>
 
         <DataTable
-          columns={vipUserColumns}
+          columns={vipUserColumns({
+            page,
+            perPage,
+            setSelectedUser,
+            setHistoryPage,
+            setIsHistoryModalOpen,
+            setSingleMode,
+            setIsSingleModalOpen,
+          })}
           data={userRows}
           isLoading={isPending}
-          disablePagination={true}
+          serverSidePagination={true}
+          serverPageCount={data?.last_page ?? 1}
+          serverTotalData={data?.total ?? 0}
+          serverPageIndex={page - 1}
+          serverPageSize={perPage}
+          onServerPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
+          onServerPageSizeChange={(newSize) => {
+            setPerPage(newSize);
+            setPage(1);
+          }}
         />
-
-        {data && (
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3 text-sm text-gray-500">
-              <span>
-                {data.total > 0
-                  ? `Menampilkan ${(page - 1) * perPage + 1}–${Math.min(page * perPage, data.total)} dari ${data.total} VIP`
-                  : "Tidak ada data preview"}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs">Tampilkan</span>
-                <Select
-                  value={String(perPage)}
-                  onValueChange={(v) => {
-                    setPerPage(Number(v));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-16 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAGE_SIZE_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={String(s)} className="text-xs">
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-xs">per baris</span>
-              </div>
-            </div>
-            {data.last_page > 1 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600 min-w-20 text-center">
-                  {data.current_page} / {data.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(data.last_page, p + 1))
-                  }
-                  disabled={page === data.last_page}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Modal Bulk Input Form */}
       <Dialog open={isBulkModalOpen} onOpenChange={setIsBulkModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Formulir Eksekusi {bulkMode === "inject" ? "Injeksi" : "Penarikan"} Tiket Massal</DialogTitle>
+            <DialogTitle>
+              Formulir Eksekusi{" "}
+              {bulkMode === "inject" ? "Injeksi" : "Penarikan"} Tiket Massal
+            </DialogTitle>
             <DialogDescription>
-              Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"} tiket {bulkMode === "inject" ? "kepada" : "dari"} total{" "}
+              Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"} tiket{" "}
+              {bulkMode === "inject" ? "kepada" : "dari"} total{" "}
               <strong>{data?.total || 0} pengguna VIP</strong> yang tampil di
               tabel (sesuai filter).
             </DialogDescription>
@@ -502,17 +338,25 @@ export default function DashboardInjectTiketWrapper() {
       <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Akhir {bulkMode === "inject" ? "Injeksi" : "Penarikan"} Massal</AlertDialogTitle>
+            <AlertDialogTitle>
+              Konfirmasi Akhir {bulkMode === "inject" ? "Injeksi" : "Penarikan"}{" "}
+              Massal
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"} <strong>{amount} tiket</strong> {bulkMode === "inject" ? "gratis" : ""} 
+                Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"}{" "}
+                <strong>{amount} tiket</strong>{" "}
+                {bulkMode === "inject" ? "gratis" : ""}
                 dengan pesan: <span className="italic">"{description}"</span>.
               </p>
               <p>
                 Total Penerima: <strong>{data?.total || 0} pengguna</strong>.
               </p>
               <p className="text-red-600 dark:text-red-400 font-semibold mt-2">
-                Peringatan: Tindakan ini tidak dapat dibatalkan. {bulkMode === "inject" ? "Tiket yang masuk ke saldo pengguna tidak bisa ditarik massal secara otomatis." : "Jika saldo pengguna kurang dari jumlah tarik, maka saldo akan dikosongkan (menjadi 0)."}
+                Peringatan: Tindakan ini tidak dapat dibatalkan.{" "}
+                {bulkMode === "inject"
+                  ? "Tiket yang masuk ke saldo pengguna tidak bisa ditarik massal secara otomatis."
+                  : "Jika saldo pengguna kurang dari jumlah tarik, maka saldo akan dikosongkan (menjadi 0)."}
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -540,9 +384,15 @@ export default function DashboardInjectTiketWrapper() {
       <Dialog open={isSingleModalOpen} onOpenChange={setIsSingleModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{singleMode === "inject" ? "Beri Tiket Spesial" : "Tarik Tiket Pengguna"}</DialogTitle>
+            <DialogTitle>
+              {singleMode === "inject"
+                ? "Beri Tiket Spesial"
+                : "Tarik Tiket Pengguna"}
+            </DialogTitle>
             <DialogDescription>
-              {singleMode === "inject" ? "Berikan tiket tambahan khusus untuk" : "Tarik tiket dari saldo"}{" "}
+              {singleMode === "inject"
+                ? "Berikan tiket tambahan khusus untuk"
+                : "Tarik tiket dari saldo"}{" "}
               <strong>{selectedUser?.name}</strong> ({selectedUser?.email}).
             </DialogDescription>
           </DialogHeader>
@@ -595,16 +445,22 @@ export default function DashboardInjectTiketWrapper() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi {singleMode === "inject" ? "Pemberian" : "Penarikan"} Tiket</AlertDialogTitle>
+            <AlertDialogTitle>
+              Konfirmasi {singleMode === "inject" ? "Pemberian" : "Penarikan"}{" "}
+              Tiket
+            </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {singleMode === "inject" ? "Berikan" : "Tarik"} <strong>{singleAmount} tiket</strong> {singleMode === "inject" ? "kepada" : "dari"}{" "}
+                {singleMode === "inject" ? "Berikan" : "Tarik"}{" "}
+                <strong>{singleAmount} tiket</strong>{" "}
+                {singleMode === "inject" ? "kepada" : "dari"}{" "}
                 <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
                 <span className="italic">"{singleDescription}"</span>?
               </p>
               {singleMode === "pull" && (
                 <p className="text-red-600 dark:text-red-400 font-semibold mt-2">
-                  Jika saldo saat ini kurang dari {singleAmount}, maka saldo akan ditarik seluruhnya hingga 0.
+                  Jika saldo saat ini kurang dari {singleAmount}, maka saldo
+                  akan ditarik seluruhnya hingga 0.
                 </p>
               )}
             </AlertDialogDescription>
@@ -619,9 +475,17 @@ export default function DashboardInjectTiketWrapper() {
                 handleSingleExecute();
               }}
               disabled={injectMutation.isPending}
-              className={singleMode === "pull" ? "bg-red-600 hover:bg-red-700" : "bg-primary"}
+              className={
+                singleMode === "pull"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-primary"
+              }
             >
-              {injectMutation.isPending ? "Mengeksekusi..." : singleMode === "pull" ? "Tarik Tiket" : "Berikan Tiket"}
+              {injectMutation.isPending
+                ? "Mengeksekusi..."
+                : singleMode === "pull"
+                  ? "Tarik Tiket"
+                  : "Berikan Tiket"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -638,72 +502,28 @@ export default function DashboardInjectTiketWrapper() {
           </DialogHeader>
           <div className="flex-1 overflow-auto py-4">
             <DataTable
-              columns={ticketLogColumns}
+              columns={ticketLogColumns({ historyPage, historyPerPage })}
               data={historyData?.data || []}
               isLoading={isHistoryPending}
-              disablePagination={true}
+              serverSidePagination={true}
+              serverPageCount={historyData?.last_page ?? 1}
+              serverTotalData={historyData?.total ?? 0}
+              serverPageIndex={historyPage - 1}
+              serverPageSize={historyPerPage}
+              onServerPageChange={(newPageIndex) =>
+                setHistoryPage(newPageIndex + 1)
+              }
+              onServerPageSizeChange={(newSize) => {
+                setHistoryPerPage(newSize);
+                setHistoryPage(1);
+              }}
             />
-            {historyData && (
-              <div className="flex items-center justify-between gap-4 flex-wrap mt-4">
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span>
-                    {historyData.total > 0
-                      ? `Menampilkan ${(historyPage - 1) * historyPerPage + 1}–${Math.min(historyPage * historyPerPage, historyData.total)} dari ${historyData.total} log`
-                      : "Tidak ada data riwayat"}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs">Tampilkan</span>
-                    <Select
-                      value={String(historyPerPage)}
-                      onValueChange={(v) => {
-                        setHistoryPerPage(Number(v));
-                        setHistoryPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="h-7 w-16 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PAGE_SIZE_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={String(s)} className="text-xs">
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-xs">per baris</span>
-                  </div>
-                </div>
-                {historyData.last_page > 1 && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                      disabled={historyPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-sm text-gray-600 min-w-20 text-center">
-                      {historyData.current_page} / {historyData.last_page}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setHistoryPage((p) => Math.min(historyData.last_page, p + 1))
-                      }
-                      disabled={historyPage === historyData.last_page}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsHistoryModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsHistoryModalOpen(false)}
+            >
               Tutup
             </Button>
           </DialogFooter>
