@@ -14,7 +14,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import SmartPagination from "@/components/molecules/pagination/SmartPagination";
+
 import {
   exportAdminRowsToExcel,
   exportAdminRowsToPdf,
@@ -833,16 +833,14 @@ export default function SalesReportPage() {
               ) : filteredSalesRows.length === 0 ? (
                 <StateBox message="Tidak ada data penjualan yang cocok dengan filter." />
               ) : (
-                <>
                   <DataTable
                     columns={salesColumns({
                       sortKey: salesSort.key,
                       sortDirection: salesSort.direction,
                       onSort: setSalesSortKey,
                     })}
-                    data={paginatedSalesRows}
+                    data={tableRows}
                     isLoading={salesQuery.isLoading}
-                    disablePagination={true}
                     tableFooter={
                       <TableFooter>
                         <TableRow>
@@ -866,20 +864,6 @@ export default function SalesReportPage() {
                       </TableFooter>
                     }
                   />
-
-                  <SmartPagination
-                    page={safeSalesPage}
-                    totalItems={tableRows.length}
-                    perPage={salesPerPage}
-                    perPageOptions={PER_PAGE_OPTIONS}
-                    itemLabel="baris"
-                    onPageChange={setSalesPage}
-                    onPerPageChange={(value) => {
-                      setSalesPerPage(value);
-                      setSalesPage(1);
-                    }}
-                  />
-                </>
               )}
             </CardContent>
           </Card>

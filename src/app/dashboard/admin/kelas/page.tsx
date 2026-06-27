@@ -41,6 +41,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
+import { DataTable } from "@/components/molecules/datatable/DataTable";
+import { kelasColumns } from "@/components/atoms/datacolumn/DataKelas";
 
 const PAGE_SIZE_OPTIONS = [10, 15, 20, 50];
 const kelasExportColumns: AdminExportColumn<Kelas>[] = [
@@ -179,9 +181,28 @@ export default function AdminKelasPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      <DashboardTitle title="Kelas" />
+
       <div className="flex items-center justify-between">
-        <DashboardTitle title="Kelas" />
+        <AdminDataToolbar
+          search={controls.search}
+          onSearchChange={controls.setSearch}
+          searchPlaceholder="Filter halaman ini..."
+          filters={kelasFilters}
+          filterValues={controls.filterValues}
+          onFilterChange={controls.setFilter}
+          sortOptions={kelasSortOptions}
+          sortKey={controls.sortKey}
+          onSortChange={controls.setSortKey}
+          onReset={controls.reset}
+          hasActiveControls={controls.hasActiveControls}
+          rows={controls.rows}
+          exportRows={getExportRows}
+          exportColumns={kelasExportColumns}
+          exportTitle="laporan-kelas"
+          filterSummary={`Search server: ${search || "-"}; filter toolbar diterapkan ke semua data`}
+        />
+
         <Link href="/dashboard/admin/kelas/create">
           <Button className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -190,197 +211,23 @@ export default function AdminKelasPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-        <Input
-          placeholder="Cari nama kelas..."
-          className="max-w-xs w-full"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
-        <Button type="submit" variant="outline">
-          Cari
-        </Button>
-      </form>
-      <AdminDataToolbar
-        search={controls.search}
-        onSearchChange={controls.setSearch}
-        searchPlaceholder="Filter halaman ini..."
-        filters={kelasFilters}
-        filterValues={controls.filterValues}
-        onFilterChange={controls.setFilter}
-        sortOptions={kelasSortOptions}
-        sortKey={controls.sortKey}
-        onSortChange={controls.setSortKey}
-        onReset={controls.reset}
-        hasActiveControls={controls.hasActiveControls}
-        rows={controls.rows}
-        exportRows={getExportRows}
-        exportColumns={kelasExportColumns}
-        exportTitle="laporan-kelas"
-        filterSummary={`Search server: ${search || "-"}; filter toolbar diterapkan ke semua data`}
+      <DataTable
+        columns={kelasColumns({
+          deleteHandler: handleDeleteClick,
+        })}
+        data={controls.rows}
+        isLoading={isLoading}
+        serverSidePagination={true}
+        serverPageCount={data?.last_page ?? 1}
+        serverTotalData={data?.total ?? 0}
+        serverPageIndex={page - 1}
+        serverPageSize={perPage}
+        onServerPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
+        onServerPageSizeChange={(newSize) => {
+          setPerPage(newSize);
+          setPage(1);
+        }}
       />
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-4 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded flex-1" />
-                <div className="h-4 bg-gray-200 rounded w-24" />
-                <div className="h-4 bg-gray-200 rounded w-24" />
-                <div className="h-4 bg-gray-200 rounded w-16" />
-                <div className="h-4 bg-gray-200 rounded w-16" />
-                <div className="h-4 bg-gray-200 rounded w-20" />
-                <div className="h-4 bg-gray-200 rounded w-24" />
-              </div>
-            ))}
-          </div>
-        ) : controls.rows.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
-            <p className="text-base">
-              {search
-                ? "Tidak ada kelas ditemukan."
-                : "Belum ada kelas. Tambahkan kelas pertama!"}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-gray-600 text-left">
-                  <th className="px-5 py-3.5 font-semibold">Nama</th>
-                  <th className="px-5 py-3.5 font-semibold">Harga</th>
-                  <th className="px-5 py-3.5 font-semibold">Diskon</th>
-                  <th className="px-5 py-3.5 font-semibold">Tiket Bonus</th>
-                  <th className="px-5 py-3.5 font-semibold">Peserta</th>
-                  <th className="px-5 py-3.5 font-semibold">Status</th>
-                  <th className="px-5 py-3.5 font-semibold text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {controls.rows.map((kelas) => (
-                  <tr
-                    key={kelas.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-5 py-4 font-medium text-gray-900 max-w-50 truncate">
-                      {kelas.name}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600">
-                      {kelas.price === 0
-                        ? "Gratis"
-                        : `Rp${kelas.price.toLocaleString("id-ID")}`}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600">
-                      {kelas.discount_price != null
-                        ? `Rp${kelas.discount_price.toLocaleString("id-ID")}`
-                        : "-"}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600">
-                      {kelas.ticket_amount > 0 ? kelas.ticket_amount : "-"}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600">
-                      {kelas.enrollments_count ?? 0}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          kelas.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {kelas.is_active ? "Aktif" : "Nonaktif"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/admin/kelas/${kelas.id}/edit`}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteClick(kelas.id)}
-                          className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {data && (
-          <div className="flex items-center justify-between gap-4 flex-wrap px-5 py-3 border-t border-gray-100">
-            <div className="flex items-center gap-3 text-sm text-gray-500">
-              <span>
-                {data.total > 0
-                  ? `Menampilkan ${(page - 1) * perPage + 1}–${Math.min(page * perPage, data.total)} dari ${data.total} kelas`
-                  : "Tidak ada kelas"}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs">Tampilkan</span>
-                <Select
-                  value={String(perPage)}
-                  onValueChange={(v) => {
-                    setPerPage(Number(v));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-16 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAGE_SIZE_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={String(s)} className="text-xs">
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-xs">per halaman</span>
-              </div>
-            </div>
-            {data.last_page > 1 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600 min-w-20 text-center">
-                  {data.current_page} / {data.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(data.last_page, p + 1))
-                  }
-                  disabled={page === data.last_page}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

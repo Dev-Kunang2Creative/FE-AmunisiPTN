@@ -106,7 +106,7 @@ export default function TicketReportDetailPage() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold text-gray-900 truncate">
+        <h1 className="text-xl md:text-3xl font-bold text-gray-900 truncate">
           Detail Laporan
         </h1>
       </div>
@@ -114,11 +114,11 @@ export default function TicketReportDetailPage() {
       <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 flex gap-3 items-start text-sm">
         <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold mb-1">Info buat Amunisian</p>
+          <p className="font-semibold mb-1">Info buat Amunisian!</p>
           <p className="leading-relaxed">
-            Amunisian dapat memberikan pesan tambahan terkait laporan ini, dan
-            tim Admin juga dapat membalas pesan tersebut. Silakan gulir ke
-            bagian paling bawah halaman untuk melihat atau membalas percakapan.
+            Amunisian otomatis mendapatkan tiket tryout (maksimum 1 tiket per
+            akun) ketika sudah membuat sebuah laporan. Silakan gunakan kode
+            redeem <strong>AMUNISICOMEBACK</strong> di menu Try Out!
           </p>
         </div>
       </div>

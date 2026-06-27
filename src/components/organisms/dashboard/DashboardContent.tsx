@@ -4,9 +4,9 @@ import HeroBanner from "@/components/molecules/dashboard/HeroBanner";
 import InfoCardCarousel from "@/components/molecules/dashboard/InfoCardCarousel";
 import LiveClassSection from "@/components/molecules/dashboard/LiveClassSection";
 import DialogCompleteProfile from "@/components/molecules/dialog/DialogCompleteProfile";
-import DialogAnnouncementPopup from "@/components/molecules/dialog/DialogAnnouncementPopup";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import ReportIssueBanner from "@/components/molecules/dashboard/ReportIssueBanner";
 
 export default function DashboardContent() {
   const { data: session } = useSession();
@@ -18,21 +18,18 @@ export default function DashboardContent() {
 
   return (
     <>
-      <section className="flex flex-col gap-6">
+      <section className="flex flex-col gap-8">
         <HeroBanner userName={session?.user?.name ?? "Amunisian"} />
+        <ReportIssueBanner />
         <InfoCardCarousel />
         <LiveClassSection />
       </section>
-
-      {/* Conditionally rendered popup for new users without full profiles */}
-      <DialogCompleteProfile 
-        open={showProfileComplete} 
+      <DialogCompleteProfile
+        open={showProfileComplete}
         onOpenChange={(open) => {
           if (!open) setProfileDialogDismissed(true);
-        }} 
+        }}
       />
-
-      <DialogAnnouncementPopup />
     </>
   );
 }

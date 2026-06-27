@@ -67,11 +67,13 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
       const status = row.original.status;
       const config = statusConfig[status] ?? {
         label: status,
-        className: "bg-gray-100 text-gray-600 hover:bg-gray-100",
+        className: "bg-gray-100 text-gray-600 hover:bg-gray-100 uppercase",
       };
 
       return (
-        <Badge className={`${config.className} text-xs`}>{config.label}</Badge>
+        <Badge className={`${config.className} text-xs uppercase`}>
+          {config.label}
+        </Badge>
       );
     },
   },
@@ -107,7 +109,7 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
 
       if (!paidAt) {
         return (
-          <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs">
+          <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs uppercase">
             Belum Dibayar
           </Badge>
         );

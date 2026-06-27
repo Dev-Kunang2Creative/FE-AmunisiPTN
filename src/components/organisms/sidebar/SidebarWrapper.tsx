@@ -45,6 +45,7 @@ import {
   Images,
   MessageSquareWarning,
   Bug,
+  ClipboardX,
 } from "lucide-react";
 import { SidebarUser } from "./SidebarUser";
 import { DASHBOARD_MENU } from "@/constants/dashboard-menu";
@@ -236,8 +237,8 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                       className={buttonClass("/dashboard/admin/ticket-report")}
                     >
                       <Link href="/dashboard/admin/ticket-report">
-                        <Bug />
-                        <span>Ticket Report</span>
+                        <ClipboardX />
+                        <span>Laporan Masalah</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -402,12 +403,12 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                         href="/dashboard/ticket-report"
                         className="flex items-center w-full gap-3"
                       >
-                        <Bug className="w-5 h-5 shrink-0" />
-                        <span>Laporan Masalah</span>
+                        <ClipboardX className="w-5 h-5 shrink-0" />
+                        <span>Laporkan Masalah</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
+                  {/* 
                   <SidebarMenuItem className="w-full relative">
                     <SidebarMenuButton
                       asChild
@@ -423,7 +424,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                         <span>Form Aduan</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
 
                   <SidebarMenuItem className="w-full relative">
                     <SidebarMenuButton

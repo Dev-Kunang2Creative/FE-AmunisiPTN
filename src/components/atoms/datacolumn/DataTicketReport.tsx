@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import type { TicketReport } from "@/http/ticket-reports/get-ticket-reports";
+import ActionButton from "@/components/molecules/datatable/ActionButton";
+import {
+  DropdownMenuItem,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { Eye } from "lucide-react";
 
 export const STATUS_CONFIG: Record<
   string,
@@ -43,7 +50,7 @@ export function TicketStatusBadge({ status }: { status: string }) {
 export const ticketReportAdminColumns: ColumnDef<TicketReport>[] = [
   {
     id: "id",
-    header: "ID",
+    header: "Kode",
     cell: ({ row }) => (
       <span className="uppercase">#{row.original.id.slice(0, 8)}</span>
     ),
@@ -90,5 +97,27 @@ export const ticketReportAdminColumns: ColumnDef<TicketReport>[] = [
         })}
       </span>
     ),
+  },
+  {
+    id: "actions",
+    header: "Aksi",
+    cell: ({ row }) => {
+      const data = row.original;
+
+      return (
+        <ActionButton>
+          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link
+              href={`/dashboard/admin/ticket-report/${data.id}`}
+              className="flex items-center text-gray-700 hover:underline"
+            >
+              <Eye className="h-4 w-4 text-gray-700" />
+              <span className="ml-2">Detail</span>
+            </Link>
+          </DropdownMenuItem>
+        </ActionButton>
+      );
+    },
   },
 ];

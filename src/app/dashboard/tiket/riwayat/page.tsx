@@ -7,7 +7,15 @@ import { useSession } from "next-auth/react";
 import { useGetTicketLogs } from "@/http/tiket/get-ticket-logs";
 import type { TicketLog } from "@/http/tiket/get-ticket-logs";
 import { formatJakartaDateTime } from "@/utils/date-time";
-import SmartPagination from "@/components/molecules/pagination/SmartPagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -186,15 +194,107 @@ export default function RiwayatTiketPage() {
       </p>
 
       {filtered.length > 0 && (
-        <SmartPagination
-          page={safeCurrentPage}
-          totalItems={filtered.length}
-          perPage={itemsPerPage}
-          perPageOptions={PER_PAGE_OPTIONS}
-          itemLabel="riwayat"
-          onPageChange={setCurrentPage}
-          onPerPageChange={(v) => { setItemsPerPage(v); resetPage(); }}
-        />
+        <div className="flex items-center justify-between gap-4 flex-wrap mt-8">
+          <div className="flex items-center gap-3 text-sm">
+            <span>
+              {filtered.length > 0
+                ? `Menampilkan ${(safeCurrentPage - 1) * itemsPerPage + 1}–${Math.min(safeCurrentPage * itemsPerPage, filtered.length)} dari ${filtered.length} data`
+                : "Tidak ada data"}
+            </span>
+          </div>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent className="gap-2">
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (safeCurrentPage > 1)
+                      setCurrentPage(Math.max(1, safeCurrentPage - 1));
+                  }}
+                  className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                    safeCurrentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }`}
+                />
+              </PaginationItem>
+
+              {(() => {
+                const getPaginationItems = (current: number, total: number) => {
+                  if (total <= 6) {
+                    return Array.from({ length: total }, (_, i) => i + 1);
+                  }
+                  if (current <= 3) {
+                    return [1, 2, 3, "...", total - 1, total];
+                  }
+                  if (current >= total - 2) {
+                    return [1, 2, "...", total - 2, total - 1, total];
+                  }
+                  return [
+                    1,
+                    "...",
+                    current - 1,
+                    current,
+                    current + 1,
+                    "...",
+                    total,
+                  ];
+                };
+
+                return getPaginationItems(safeCurrentPage, totalPages).map(
+                  (page, i) => {
+                    if (page === "...") {
+                      return (
+                        <PaginationItem key={i}>
+                          <PaginationEllipsis className="h-9 w-9" />
+                        </PaginationItem>
+                      );
+                    }
+                    const isCurrent = page === safeCurrentPage;
+                    return (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page as number);
+                          }}
+                          isActive={isCurrent}
+                          className={`h-9 w-9 p-0 cursor-pointer border ${
+                            isCurrent
+                              ? "bg-primary text-white hover:bg-primary border-primary hover:text-white"
+                              : "text-gray-900 border-primary/60 hover:bg-primary/10"
+                          }`}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  },
+                );
+              })()}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (safeCurrentPage < totalPages)
+                      setCurrentPage(
+                        Math.min(totalPages, safeCurrentPage + 1),
+                      );
+                  }}
+                  className={`h-9 w-9 p-0 cursor-pointer border border-primary/60 text-gray-900 hover:bg-primary/10 ${
+                    safeCurrentPage >= totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }`}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
     </div>
   );

@@ -13,6 +13,7 @@ import {
   ImagePlus,
   X,
   Loader2,
+  Info,
 } from "lucide-react";
 import { useGetTicketReports } from "@/http/ticket-reports/get-ticket-reports";
 import { useCreateTicketReport } from "@/http/ticket-reports/create-ticket-report";
@@ -136,8 +137,8 @@ export default function TicketReportPage() {
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-            Laporan Masalah
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900">
+            Laporkan Masalah
           </h1>
         </div>
         <Button
@@ -147,6 +148,18 @@ export default function TicketReportPage() {
           <Plus className="w-4 h-4" />
           Buat Laporan
         </Button>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 flex gap-3 items-start text-sm">
+        <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold mb-1">Info buat Amunisian!</p>
+          <p className="leading-relaxed">
+            Amunisian otomatis mendapatkan tiket tryout gratis ketika sudah
+            membuat sebuah laporan. Yuk jika ada kendala bisa laporkan di bawah
+            ini!
+          </p>
+        </div>
       </div>
 
       {/* Tickets list */}
@@ -352,7 +365,7 @@ export default function TicketReportPage() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter className="gap-2 sm:gap-2 bg-transparent">
             <Button
               variant="outline"
               onClick={() => {

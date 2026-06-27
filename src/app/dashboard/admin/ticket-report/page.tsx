@@ -4,10 +4,9 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAdminGetTicketReports } from "@/http/ticket-reports/admin-get-ticket-reports";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  TicketStatusBadge,
   STATUS_CONFIG,
   ticketReportAdminColumns,
 } from "@/components/atoms/datacolumn/DataTicketReport";
@@ -15,8 +14,6 @@ import { DataTable } from "@/components/molecules/datatable/DataTable";
 import DashboardTitle from "@/components/atoms/typography/DashboardTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { TicketReport } from "@/http/ticket-reports/get-ticket-reports";
-import { ColumnDef } from "@tanstack/react-table";
 
 const STATUS_TABS = ["Semua", "OPEN", "IN_PROGRESS", "SOLVED"] as const;
 
@@ -55,46 +52,22 @@ export default function AdminTicketReportPage() {
 
   const activeTabLabel = statusFilter || "Semua";
 
-  const columnsWithAction: ColumnDef<TicketReport>[] = [
-    ...ticketReportAdminColumns,
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }: { row: { original: TicketReport } }) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-[#004AAB] hover:text-[#004AAB] hover:bg-[#EBF4FF]"
-          onClick={() =>
-            router.push(`/dashboard/admin/ticket-report/${row.original.id}`)
-          }
-        >
-          Detail
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <main className="space-y-6 pb-8">
-      <DashboardTitle title="Ticket Report" />
-
-      {/* Status filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-              activeTabLabel === tab
-                ? "bg-[#004AAB] text-white border-[#004AAB]"
-                : "bg-white text-slate-600 border-slate-200 hover:border-[#004AAB] hover:text-[#004AAB]"
-            }`}
-          >
-            {tab === "Semua" ? "Semua" : (STATUS_CONFIG[tab]?.label ?? tab)}
-          </button>
-        ))}
-      </div>
+      <DashboardTitle title="Laporan Masalah" />
+      <Tabs
+        value={activeTabLabel}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        <TabsList className="h-10">
+          {STATUS_TABS.map((tab) => (
+            <TabsTrigger key={tab} value={tab} className="px-4">
+              {tab === "Semua" ? "Semua" : (STATUS_CONFIG[tab]?.label ?? tab)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Search bar */}
       <div className="flex gap-2 max-w-md">
@@ -123,47 +96,16 @@ export default function AdminTicketReportPage() {
 
       {/* Table */}
       <DataTable
-        columns={columnsWithAction}
+        columns={ticketReportAdminColumns}
         data={data?.data ?? []}
         isLoading={isLoading}
-        disablePagination={true}
+        serverSidePagination={true}
+        serverPageCount={data?.last_page ?? 1}
+        serverTotalData={data?.total ?? 0}
+        serverPageIndex={page - 1}
+        serverPageSize={data?.per_page ?? 15}
+        onServerPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
       />
-
-      {/* Server-side pagination */}
-      {data && data.total > 0 && (
-        <div className="flex items-center justify-between text-sm text-slate-500">
-          <p>
-            Menampilkan {(data.current_page - 1) * data.per_page + 1}–
-            {Math.min(data.current_page * data.per_page, data.total)} dari{" "}
-            {data.total} ticket
-          </p>
-          {data.last_page > 1 && (
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-md"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="px-2">
-                {data.current_page} / {data.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-md"
-                onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
-                disabled={page === data.last_page}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </main>
   );
 }

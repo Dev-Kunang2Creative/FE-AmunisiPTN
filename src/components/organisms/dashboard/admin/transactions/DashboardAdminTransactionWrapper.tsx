@@ -186,68 +186,17 @@ export default function DashboardAdminTransactionWrapper() {
           columns={transactionColumns}
           data={controls.rows}
           isLoading={isPending}
-          disablePagination={true}
+          serverSidePagination={true}
+          serverPageCount={data?.last_page ?? 1}
+          serverTotalData={data?.total ?? 0}
+          serverPageIndex={page - 1}
+          serverPageSize={perPage}
+          onServerPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
+          onServerPageSizeChange={(newSize) => {
+            setPerPage(newSize);
+            setPage(1);
+          }}
         />
-
-        {/* Pagination */}
-        {data && (
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3 text-sm text-gray-500">
-              <span>
-                {data.total > 0
-                  ? `Menampilkan ${(page - 1) * perPage + 1}–${Math.min(page * perPage, data.total)} dari ${data.total} transaksi`
-                  : "Tidak ada transaksi"}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs">Tampilkan</span>
-                <Select
-                  value={String(perPage)}
-                  onValueChange={(v) => {
-                    setPerPage(Number(v));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-7 w-16 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAGE_SIZE_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={String(s)} className="text-xs">
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-xs">per halaman</span>
-              </div>
-            </div>
-            {data.last_page > 1 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600 min-w-20 text-center">
-                  {data.current_page} / {data.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(data.last_page, p + 1))
-                  }
-                  disabled={page === data.last_page}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </section>
   );

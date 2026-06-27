@@ -5,7 +5,7 @@ import type { User } from "@/types/user/user";
 
 export interface TryoutProofItem {
   id: string;
-  granted_at: string | null;
+  granted_at: Date | null;
   user: Pick<User, "id" | "name" | "email"> | null;
   tryout: {
     id: string;

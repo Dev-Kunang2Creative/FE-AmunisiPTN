@@ -172,7 +172,7 @@ export default function AdminTicketReportDetailPage() {
 
   return (
     <main className="space-y-6">
-      <DashboardTitle title="Detail Ticket Report" />
+      <DashboardTitle title="Detail Laporan Masalah" />
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
