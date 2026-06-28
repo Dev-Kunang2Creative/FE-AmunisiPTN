@@ -11,15 +11,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Ticket } from "lucide-react";
+import { Ticket, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useEffect } from "react";
 import { useGetVipUsers } from "@/http/users/get-vip-users";
 import { useInjectVipTickets } from "@/http/users/inject-vip-tickets";
 import {
   useGetUserTicketLogs,
-  TicketLog,
 } from "@/http/users/get-user-ticket-logs";
 import { DataTable } from "@/components/molecules/datatable/DataTable";
 import { User } from "@/types/user/user";
@@ -54,8 +55,12 @@ export default function DashboardInjectTiketWrapper() {
   // Table State
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   // Filter State
   const [filterType, setFilterType] = useState<"all_vip" | "date_range">(
@@ -90,7 +95,7 @@ export default function DashboardInjectTiketWrapper() {
     token,
     page,
     perPage,
-    search,
+    search: debouncedSearch,
     filter_type: filterType,
     start_date: startDate,
     end_date: endDate,
@@ -130,11 +135,7 @@ export default function DashboardInjectTiketWrapper() {
       options: { enabled: !!selectedUser && isHistoryModalOpen },
     });
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
-  };
+
 
   const handleFilterChange = () => {
     setPage(1);
@@ -177,20 +178,15 @@ export default function DashboardInjectTiketWrapper() {
     <section>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex flex-1 items-center gap-2"
-          >
+          <div className="flex flex-1 items-center gap-2 relative">
             <Input
               placeholder="Cari nama atau email..."
-              className="max-w-xs"
+              className="max-w-xs pl-9"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
-            <Button type="submit" variant="outline">
-              Cari
-            </Button>
-          </form>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
 
           <div className="flex flex-col md:flex-row items-center gap-3">
             <div className="flex items-center gap-2">
@@ -314,7 +310,7 @@ export default function DashboardInjectTiketWrapper() {
                 onChange={(e) => setDescription(e.target.value)}
               />
               <p className="text-xs text-gray-500">
-                Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".
+                Pesan log akan menggunakan nama pengirim &quot;Sistem AmunisiPTN&quot;.
               </p>
             </div>
           </div>
@@ -346,8 +342,8 @@ export default function DashboardInjectTiketWrapper() {
               <p>
                 Anda akan {bulkMode === "inject" ? "memberikan" : "menarik"}{" "}
                 <strong>{amount} tiket</strong>{" "}
-                {bulkMode === "inject" ? "gratis" : ""}
-                dengan pesan: <span className="italic">"{description}"</span>.
+                {bulkMode === "inject" ? "gratis " : ""}
+                dengan pesan: <span className="italic">&quot;{description}&quot;</span>.
               </p>
               <p>
                 Total Penerima: <strong>{data?.total || 0} pengguna</strong>.
@@ -415,7 +411,7 @@ export default function DashboardInjectTiketWrapper() {
                 onChange={(e) => setSingleDescription(e.target.value)}
               />
               <p className="text-xs text-gray-500">
-                Pesan log akan menggunakan nama pengirim "Sistem AmunisiPTN".
+                Pesan log akan menggunakan nama pengirim &quot;Sistem AmunisiPTN&quot;.
               </p>
             </div>
           </div>
@@ -455,7 +451,7 @@ export default function DashboardInjectTiketWrapper() {
                 <strong>{singleAmount} tiket</strong>{" "}
                 {singleMode === "inject" ? "kepada" : "dari"}{" "}
                 <strong>{selectedUser?.name}</strong> dengan pesan:{" "}
-                <span className="italic">"{singleDescription}"</span>?
+                <span className="italic">&quot;{singleDescription}&quot;</span>?
               </p>
               {singleMode === "pull" && (
                 <p className="text-red-600 dark:text-red-400 font-semibold mt-2">

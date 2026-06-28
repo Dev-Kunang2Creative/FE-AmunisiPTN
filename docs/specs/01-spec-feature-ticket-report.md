@@ -2,22 +2,22 @@
 
 ## Overview
 
-Feature **Ticket Report** memungkinkan user aplikasi tryout **AmunisiPTN** untuk melaporkan bug, error, atau kendala selama menggunakan sistem.
+The **Ticket Report** feature allows users of the **AmunisiPTN** tryout application to report bugs, errors, or issues encountered while using the system.
 
-Tujuan feature ini:
+The purpose of this feature is to:
 
-- Menyediakan jalur komunikasi terstruktur antara user dan admin terkait masalah teknis.
-- Mempermudah tracking issue hingga selesai.
-- Meningkatkan user experience dengan transparansi progress penyelesaian.
+- Provide a structured communication channel between users and admins for technical issues.
+- Simplify issue tracking until resolution.
+- Improve user experience through transparent issue handling progress.
 
 ---
 
 # Goals
 
-- User dapat membuat laporan kendala.
-- User dapat melihat progress/status ticket.
-- Admin dapat memonitor semua ticket.
-- Admin dapat mengubah status ticket.
+- Users can create issue reports.
+- Users can monitor ticket progress/status.
+- Admins can monitor all tickets.
+- Admins can update ticket statuses.
 
 ---
 
@@ -25,11 +25,11 @@ Tujuan feature ini:
 
 ## User
 
-Role yang membuat ticket report.
+A role responsible for creating ticket reports.
 
-Permissions:
+### Permissions
 
-- Create ticket
+- Create tickets
 - View own tickets
 - Upload supporting images
 - Monitor ticket status
@@ -38,14 +38,14 @@ Permissions:
 
 ## Admin
 
-Role yang menangani ticket report.
+A role responsible for handling ticket reports.
 
-Permissions:
+### Permissions
 
 - View all tickets
 - Filter tickets by status
 - Update ticket status
-- Resolve ticket
+- Resolve tickets
 
 ---
 
@@ -55,19 +55,19 @@ Permissions:
 OPEN → IN_PROGRESS → SOLVED
 ```
 
-## Status Definition
+## Status Definitions
 
 ### OPEN
 
-Ticket baru dibuat dan belum ditangani.
+A newly created ticket that has not been handled yet.
 
 ### IN_PROGRESS
 
-Admin sedang investigasi atau menangani.
+The admin is currently investigating or working on the issue.
 
 ### SOLVED
 
-Masalah telah diselesaikan.
+The issue has been resolved.
 
 ---
 
@@ -75,13 +75,13 @@ Masalah telah diselesaikan.
 
 ## Create Ticket
 
-User membuka halaman:
+The user navigates to:
 
 ```text
 Dashboard → Help Center → Report Issue
 ```
 
-User mengisi form:
+The user fills out the form.
 
 ### Fields
 
@@ -91,7 +91,7 @@ User mengisi form:
 | description | rich text             | yes      |
 | images      | multiple image upload | no       |
 
-System automatically sets:
+The system automatically sets:
 
 ```text
 status = OPEN
@@ -103,9 +103,9 @@ created_at = current_timestamp
 
 ## View My Tickets
 
-User dapat melihat daftar ticket miliknya.
+Users can view a list of their own submitted tickets.
 
-Displayed fields:
+### Displayed Fields
 
 - Ticket ID
 - Title
@@ -113,15 +113,15 @@ Displayed fields:
 - Created At
 - Updated At
 
-Actions:
+### Actions
 
-- View detail ticket
+- View ticket details
 
 ---
 
 ## Ticket Detail
 
-User dapat melihat:
+Users can view:
 
 - Title
 - Description
@@ -136,20 +136,20 @@ User dapat melihat:
 
 ## Ticket Dashboard
 
-Admin dapat melihat seluruh ticket.
+Admins can view all submitted tickets.
 
-Features:
+### Features
 
 - Search by title
 - Filter by status
 - Sort by latest
-- View ticket detail
+- View ticket details
 
 ---
 
 ## Update Ticket Status
 
-Admin dapat mengubah status:
+Admins can update ticket statuses with valid transitions:
 
 ```text
 OPEN → IN_PROGRESS
@@ -162,47 +162,47 @@ IN_PROGRESS → SOLVED
 
 ## FR-01 Create Ticket
 
-System harus mengizinkan user yang sudah login untuk membuat ticket.
+The system must allow authenticated users to create tickets.
 
-Validation:
+### Validation
 
-- title required
-- description required
+- `title` is required
+- `description` is required
 
 ---
 
 ## FR-02 Upload Images
 
-System harus mendukung upload multiple images secara opsional.
+The system must support optional multiple image uploads.
 
-Constraints:
+### Constraints
 
-- max 5 images
-- max 3MB per image
-- allowed formats: jpg, jpeg, png, webp
+- Maximum 5 images
+- Maximum 3MB per image
+- Allowed formats: jpg, jpeg, png, webp
 
-Storage:
+### Storage
 
 ```text
 /storage/ticket-reports/
 ```
 
-Data disimpan dalam bentuk array/json pada field `images`.
+Images should be stored as an array/JSON in the `images` field.
 
 ---
 
 ## FR-03 Rich Text Description
 
-Description harus support:
+The description field must support:
 
-- bold
-- italic
-- bullet list
-- ordered list
-- code block
-- links
+- Bold
+- Italic
+- Bullet lists
+- Ordered lists
+- Code blocks
+- Links
 
-Suggested editor:
+### Suggested Editors
 
 - Tiptap
 - Quill
@@ -212,55 +212,54 @@ Suggested editor:
 
 ## FR-04 Ticket Listing
 
-User hanya dapat melihat ticket miliknya sendiri.
-
-Admin dapat melihat semua ticket.
+- Users can only view their own tickets.
+- Admins can view all tickets.
 
 ---
 
 ## FR-05 Ticket Status Management
 
-Admin dapat mengubah status ticket.
+Admins can update ticket statuses.
 
-Valid status:
+### Valid Statuses
 
 - OPEN
 - IN_PROGRESS
 - SOLVED
 
-Status transition harus valid.
+Status transitions must follow the defined lifecycle.
 
 ---
 
-# Non Functional Requirements
+# Non-Functional Requirements
 
 ## Performance
 
-- Ticket list load under 2 seconds
-- Image upload must show progress indicator
+- Ticket list should load in under 2 seconds.
+- Image uploads must display a progress indicator.
 
 ---
 
 ## Security
 
-- Only authenticated users can create ticket
-- User cannot access other users’ ticket
-- Only admin can update status
+- Only authenticated users can create tickets.
+- Users cannot access other users’ tickets.
+- Only admins can update ticket statuses.
 
 ---
 
 ## Scalability
 
-System should support:
+The system should support:
 
-- 10.000+ tickets
-- optimized image storage
+- 10,000+ tickets
+- Optimized image storage
 
 ---
 
 # Database Design
 
-## ticket_reports
+## `ticket_reports`
 
 | Field       | Type          |
 | ----------- | ------------- |
@@ -283,17 +282,17 @@ System should support:
 POST /api/ticket-reports
 ```
 
-Payload:
+### Payload
 
 ```json
 {
-  "title": "Timer ujian berhenti",
-  "description": "<p>Timer tidak berjalan saat pindah soal</p>",
+  "title": "Exam timer stopped",
+  "description": "<p>The timer stopped when switching questions</p>",
   "images": ["file"]
 }
 ```
 
-Response:
+### Response
 
 ```json
 {
@@ -309,6 +308,8 @@ Response:
 ```http
 GET /api/ticket-reports
 ```
+
+Returns only the authenticated user's tickets.
 
 ---
 
@@ -326,7 +327,7 @@ GET /api/ticket-reports/{id}
 GET /api/admin/ticket-reports
 ```
 
-Query:
+### Query Example
 
 ```text
 ?status=OPEN
@@ -340,7 +341,7 @@ Query:
 PATCH /api/admin/ticket-reports/{id}/status
 ```
 
-Payload:
+### Payload
 
 ```json
 {
@@ -377,41 +378,41 @@ Payload:
 
 ## Empty Images
 
-Ticket tetap bisa dibuat tanpa image.
+Tickets should still be created successfully without images.
 
 ---
 
-## Large Images
+## Oversized Images
 
-System harus reject jika image melebihi batas.
+The system must reject images that exceed the size limit.
 
 ---
 
 ## Deleted User
 
-Ticket tetap tersimpan meskipun user dihapus.
+Tickets must remain stored even if the associated user is deleted.
 
 ---
 
 # Future Improvements
 
-- Comment thread antara user dan admin
-- Re-open solved ticket
+- Comment threads between users and admins
+- Reopen solved tickets
 - Priority labels (Low, Medium, High, Critical)
 - Category tags (Bug, Payment, UI, System Error)
-- Attachment file selain image
+- Support for non-image attachments
 - Notification system
 
 ---
 
 # Acceptance Criteria
 
-- User dapat submit ticket report
-- User dapat melihat daftar ticket miliknya
-- User dapat melihat detail ticket
-- Admin dapat melihat seluruh ticket
-- Admin dapat filter ticket berdasarkan status
-- Admin dapat update status ticket
-- Upload image berjalan dengan baik
-- Access control berjalan sesuai role
-- Rich text description tersimpan dengan benar
+- Users can submit ticket reports.
+- Users can view their own ticket list.
+- Users can view ticket details.
+- Admins can view all tickets.
+- Admins can filter tickets by status.
+- Admins can update ticket statuses.
+- Image uploads work correctly.
+- Access control works based on user roles.
+- Rich text descriptions are stored properly.

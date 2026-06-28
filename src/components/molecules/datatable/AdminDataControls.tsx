@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type React from "react";
 import { Download, Search, X, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -330,6 +331,20 @@ export function AdminDataToolbar<T>({
   children,
 }: AdminDataToolbarProps<T>) {
   const [isExporting, setIsExporting] = useState(false);
+  const [localSearch, setLocalSearch] = useState(search);
+  const debouncedSearch = useDebounce(localSearch, 500);
+
+  // Sync internal state if prop changes from outside (e.g., reset)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Fire onSearchChange when debounced value changes
+  useEffect(() => {
+    if (debouncedSearch !== search) {
+      onSearchChange(debouncedSearch);
+    }
+  }, [debouncedSearch, search, onSearchChange]);
 
   const runExport = async (type: "excel" | "pdf") => {
     setIsExporting(true);
@@ -367,8 +382,8 @@ export function AdminDataToolbar<T>({
         <div className="relative w-full md:max-w-sm flex-1 min-w-[200px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            value={localSearch}
+            onChange={(event) => setLocalSearch(event.target.value)}
             placeholder={searchPlaceholder}
             className="pl-9 w-full bg-background"
           />

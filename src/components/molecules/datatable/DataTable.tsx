@@ -225,7 +225,7 @@ export function DataTable<TData, TValue>({
 
       {!isLoading && totalDataCount > 0 && !disablePagination && (
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>
               {totalDataCount > 0
                 ? `Menampilkan ${from}–${to} dari ${totalDataCount} data`

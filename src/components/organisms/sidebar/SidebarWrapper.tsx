@@ -44,6 +44,7 @@ import {
   Ticket,
   Images,
   ClipboardX,
+  History,
 } from "lucide-react";
 import { SidebarUser } from "./SidebarUser";
 import { DASHBOARD_MENU } from "@/constants/dashboard-menu";
@@ -277,7 +278,7 @@ export function SidebarWrapper({ session }: SidebarWrapperProps) {
                       className={buttonClass("/dashboard/admin/audit-log")}
                     >
                       <Link href="/dashboard/admin/audit-log">
-                        <Shield />
+                        <History />
                         <span>Log Audit</span>
                       </Link>
                     </SidebarMenuButton>
