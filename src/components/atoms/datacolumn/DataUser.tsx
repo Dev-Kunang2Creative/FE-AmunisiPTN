@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash2, Ticket } from "lucide-react";
+import { Trash2, Ticket, TicketPlus, TicketMinus, Eye } from "lucide-react";
 import ActionButton from "@/components/molecules/datatable/ActionButton";
 import {
   DropdownMenuItem,
@@ -9,9 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types/user/user";
+import Link from "next/link";
 
 interface DataUserProps {
   deleteUserHandler: (data: User) => void;
+  setSelectedUser: (user: User) => void;
+  setSingleMode: (mode: "inject" | "pull") => void;
+  setIsSingleModalOpen: (open: boolean) => void;
 }
 
 export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
@@ -83,6 +87,32 @@ export const userColumns: (props: DataUserProps) => ColumnDef<User>[] = (
       return (
         <ActionButton>
           <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/admin/users/${data.id}`}>
+              <Eye className="mr-2 h-4 w-4" />
+              <span>Lihat Detail</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              props.setSelectedUser(data);
+              props.setSingleMode("inject");
+              props.setIsSingleModalOpen(true);
+            }}
+          >
+            <TicketPlus className="mr-2 h-4 w-4" />
+            <span>Inject Tiket</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              props.setSelectedUser(data);
+              props.setSingleMode("pull");
+              props.setIsSingleModalOpen(true);
+            }}
+          >
+            <TicketMinus className="mr-2 h-4 w-4" />
+            <span>Tarik Tiket</span>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <div
               onClick={() => props.deleteUserHandler(data)}

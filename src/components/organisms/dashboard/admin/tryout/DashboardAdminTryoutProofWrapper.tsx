@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { ExternalLink, Search } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,6 +26,12 @@ export default function DashboardAdminTryoutProofWrapper() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   const [selectedProof, setSelectedProof] = useState<TryoutProofItem | null>(
     null,
   );
@@ -33,7 +41,7 @@ export default function DashboardAdminTryoutProofWrapper() {
     token: session?.access_token ?? "",
     page,
     perPage,
-    search,
+    search: debouncedSearch,
   });
 
   const rows = data?.data ?? [];
@@ -52,7 +60,6 @@ export default function DashboardAdminTryoutProofWrapper() {
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
-              setPage(1);
             }}
             placeholder="Cari peserta atau tryout..."
             className="pl-9 w-full"

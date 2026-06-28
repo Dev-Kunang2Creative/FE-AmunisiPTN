@@ -28,6 +28,8 @@ import { Transaction } from "@/types/transactions/transaction";
 import { formatPrice } from "@/utils/format-price";
 import { useSession } from "next-auth/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useEffect } from "react";
 
 const PAGE_SIZE_OPTIONS = [10, 15, 20, 50];
 const transactionStatusLabels: Record<string, string> = {
@@ -100,14 +102,18 @@ export default function DashboardAdminTransactionWrapper() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data, isPending } = useGetAllTransaction({
     token: session?.access_token as string,
     page,
     perPage,
-    search,
+    search: debouncedSearch,
     options: { enabled: status === "authenticated" },
   });
   const transactionRows = data?.data ?? [];
@@ -136,12 +142,12 @@ export default function DashboardAdminTransactionWrapper() {
   const getExportRows = async () => {
     const rows = await GetAllTransactionsForExportHandler(
       session?.access_token as string,
-      search,
+      debouncedSearch,
     );
 
     return getControlledAdminRows({
       data: rows,
-      search: controls.search,
+      search: "", // disable local search for export since it's already filtered by server
       filterValues: controls.filterValues,
       sortKey: controls.sortKey,
       searchFields: [
@@ -154,18 +160,14 @@ export default function DashboardAdminTransactionWrapper() {
     });
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
-  };
+
 
   return (
     <section>
       <div className="space-y-6">
         <AdminDataToolbar
-          search={controls.search}
-          onSearchChange={controls.setSearch}
+          search={searchInput}
+          onSearchChange={setSearchInput}
           searchPlaceholder="Cari berdasarkan nama pengguna..."
           filters={transactionFilters}
           filterValues={controls.filterValues}
@@ -174,12 +176,12 @@ export default function DashboardAdminTransactionWrapper() {
           sortKey={controls.sortKey}
           onSortChange={controls.setSortKey}
           onReset={controls.reset}
-          hasActiveControls={controls.hasActiveControls}
+          hasActiveControls={controls.hasActiveControls || Boolean(searchInput)}
           rows={controls.rows}
           exportRows={getExportRows}
           exportColumns={transactionExportColumns}
           exportTitle="laporan-transaksi"
-          filterSummary={`Search server: ${search || "-"}; filter toolbar diterapkan ke semua data`}
+          filterSummary={`Search server: ${debouncedSearch || "-"}; filter toolbar diterapkan ke semua data`}
         />
 
         <DataTable

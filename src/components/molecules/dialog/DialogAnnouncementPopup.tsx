@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
@@ -38,6 +38,7 @@ export default function DialogAnnouncementPopup() {
         showCloseButton={false}
         className="sm:max-w-sm p-0 overflow-hidden bg-white gap-0 border-none flex flex-col"
       >
+        <DialogTitle className="sr-only">Pengumuman</DialogTitle>
         <DialogClose asChild>
           <Button
             variant="ghost"
