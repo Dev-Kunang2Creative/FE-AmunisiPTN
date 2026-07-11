@@ -24,6 +24,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -494,11 +501,13 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
   tryoutId,
 }: DashboardAdminTryoutLeaderboardWrapperProps) {
   const { data: session } = useSession();
+  const [page, setPage] = useState(1);
   const [selectedProofEntry, setSelectedProofEntry] = useState<LeaderboardEntry | null>(null);
 
   const { data, isPending } = useGetTryoutLeaderboard({
     token: session?.access_token ?? "",
     tryoutId,
+    page,
   });
 
   if (isPending) {
@@ -516,7 +525,8 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
     );
   }
 
-  const leaderboard = data?.data.leaderboard ?? [];
+  const leaderboard = data?.data.leaderboard?.data ?? [];
+  const totalPages = data?.data.leaderboard?.last_page ?? 1;
   const tryoutTitle = data?.data.tryout_title;
   const leaderboardBasis = data?.data.leaderboard_basis;
 
@@ -619,6 +629,40 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
           </Table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center pb-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (page > 1) setPage(page - 1);
+                  }}
+                  className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="text-sm text-slate-500 font-medium px-4">
+                  Halaman {page} dari {totalPages}
+                </span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (page < totalPages) setPage(page + 1);
+                  }}
+                  className={page >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <ProofImagesDialog
         entry={selectedProofEntry}

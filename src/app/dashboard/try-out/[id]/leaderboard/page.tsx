@@ -1,10 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ChevronLeft, Medal, Trophy, Users } from "lucide-react";
+import { ChevronLeft, Medal, Trophy, Users, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useGetTryoutLeaderboard } from "@/http/tryout/get-tryout-leaderboard";
+import { useInfiniteGetTryoutLeaderboard } from "@/http/tryout/get-tryout-leaderboard";
 import { formatJakartaDateTime } from "@/utils/date-time";
 import type { LeaderboardEntry } from "@/types/exam/exam";
 
@@ -18,13 +18,34 @@ export default function TryoutLeaderboardPage({
   const token = session?.access_token || "";
   const currentUserId = session?.user?.id || "";
 
-  const { data, isLoading } = useGetTryoutLeaderboard({
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteGetTryoutLeaderboard({
     tryoutId,
     token,
   });
 
-  const leaderboardData = data?.data;
-  const entries = leaderboardData?.leaderboard ?? [];
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  
+  const lastElementRef = useCallback((node: HTMLDivElement) => {
+    if (isLoading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+  const entries = data?.pages.flatMap((page) => page.data.leaderboard.data) ?? [];
+  const tryoutTitle = data?.pages[0]?.data.tryout_title ?? "Tryout";
 
   const myEntry = entries.find((e) => e.user_id === currentUserId);
 
@@ -45,7 +66,7 @@ export default function TryoutLeaderboardPage({
           <Trophy className="w-8 h-8 text-yellow-300" />
           <div>
             <h2 className="text-xl font-bold">
-              {leaderboardData?.tryout_title ?? "Tryout"}
+              {tryoutTitle}
             </h2>
             <p className="text-white/70 text-sm">
               Peringkat dihitung dari percobaan pertama setiap peserta.
@@ -80,7 +101,8 @@ export default function TryoutLeaderboardPage({
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="flex justify-center p-10 text-slate-500">
+          <div className="flex justify-center p-10 text-slate-500 items-center">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
             Memuat leaderboard...
           </div>
         ) : entries.length === 0 ? (
@@ -90,16 +112,32 @@ export default function TryoutLeaderboardPage({
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {entries.map((entry) => (
-              <LeaderboardRow
-                key={entry.user_id}
-                entry={entry}
-                isMe={entry.user_id === currentUserId}
-              />
-            ))}
+            {entries.map((entry, index) => {
+              if (index === entries.length - 1) {
+                return (
+                  <div ref={lastElementRef} key={entry.user_id}>
+                    <LeaderboardRow entry={entry} isMe={entry.user_id === currentUserId} />
+                  </div>
+                );
+              }
+              return (
+                <LeaderboardRow
+                  key={entry.user_id}
+                  entry={entry}
+                  isMe={entry.user_id === currentUserId}
+                />
+              );
+            })}
           </div>
         )}
       </div>
+
+      {isFetchingNextPage && (
+        <div className="flex justify-center p-6 text-slate-500 items-center">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          Memuat halaman selanjutnya...
+        </div>
+      )}
     </div>
   );
 }
