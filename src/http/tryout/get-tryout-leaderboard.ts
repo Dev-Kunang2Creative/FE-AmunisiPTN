@@ -10,13 +10,14 @@ interface GetTryoutLeaderboardResponse {
 export const GetTryoutLeaderboardHandler = async (
   tryoutId: string,
   token: string,
-  page: number = 1
+  page: number = 1,
+  perPage?: number
 ): Promise<GetTryoutLeaderboardResponse> => {
   const { data } = await api.get<GetTryoutLeaderboardResponse>(
     `/tryouts/${tryoutId}/leaderboard`,
     { 
       headers: { Authorization: `Bearer ${token}` },
-      params: { page }
+      params: { page, per_page: perPage }
     },
   );
 
@@ -27,16 +28,18 @@ export const useGetTryoutLeaderboard = ({
   tryoutId,
   token,
   page = 1,
+  perPage,
   options,
 }: {
   tryoutId: string;
   token: string;
   page?: number;
+  perPage?: number;
   options?: Partial<UseQueryOptions<GetTryoutLeaderboardResponse, AxiosError>>;
 }) => {
   return useQuery({
-    queryKey: ["get-tryout-leaderboard", tryoutId, page],
-    queryFn: () => GetTryoutLeaderboardHandler(tryoutId, token, page),
+    queryKey: ["get-tryout-leaderboard", tryoutId, page, perPage],
+    queryFn: () => GetTryoutLeaderboardHandler(tryoutId, token, page, perPage),
     enabled: !!tryoutId && !!token,
     ...options,
   });

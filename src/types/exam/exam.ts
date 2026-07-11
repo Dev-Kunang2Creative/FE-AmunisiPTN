@@ -100,6 +100,12 @@ export interface TryoutLeaderboardData {
   tryout_title: string;
   use_irt: boolean;
   leaderboard_basis: "attempt_number_1";
+  statistics: {
+    total_participants: number;
+    average_score: number;
+    highest_score: number;
+    average_accuracy: number;
+  };
   leaderboard: {
     current_page: number;
     data: LeaderboardEntry[];
