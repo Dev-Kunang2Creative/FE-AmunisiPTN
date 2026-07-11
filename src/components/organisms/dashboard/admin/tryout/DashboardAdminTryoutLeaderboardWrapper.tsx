@@ -207,8 +207,6 @@ export default function DashboardAdminTryoutLeaderboardWrapper({
 
   return (
     <section className="space-y-5">
-      <SectionHeader title={tryoutTitle} />
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {isPending ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
