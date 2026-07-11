@@ -42,7 +42,7 @@ export default function NotificationDropdown() {
     if (notification.data?.ticket_report_id) {
       // Assuming navigation to ticket report details
       router.push(
-        `/dashboard/bantuan/laporan-kendala/${notification.data.ticket_report_id}`,
+        `/dashboard/ticket-report/${notification.data.ticket_report_id}`,
       );
     }
   };
