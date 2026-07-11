@@ -54,8 +54,8 @@ export const tryoutColumns = (props: DataTryoutProps): ColumnDef<Tryout>[] => [
         <Badge
           className={
             isPublished
-              ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs"
-              : "bg-red-100 text-red-700 hover:bg-red-100 text-xs"
+              ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs uppercase"
+              : "bg-red-100 text-red-700 hover:bg-red-100 text-xs uppercase"
           }
         >
           {isPublished ? "Dipublish" : "Draft"}
