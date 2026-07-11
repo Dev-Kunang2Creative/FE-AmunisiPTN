@@ -47,7 +47,7 @@ export default function TryoutLeaderboardPage({
   const entries = data?.pages.flatMap((page) => page.data.leaderboard.data) ?? [];
   const tryoutTitle = data?.pages[0]?.data.tryout_title ?? "Tryout";
 
-  const myEntry = entries.find((e) => e.user_id === currentUserId);
+  const myEntry = entries.find((e: LeaderboardEntry) => e.user_id === currentUserId);
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-500 pb-12">
@@ -112,7 +112,7 @@ export default function TryoutLeaderboardPage({
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {entries.map((entry, index) => {
+            {entries.map((entry: LeaderboardEntry, index: number) => {
               if (index === entries.length - 1) {
                 return (
                   <div ref={lastElementRef} key={entry.user_id}>

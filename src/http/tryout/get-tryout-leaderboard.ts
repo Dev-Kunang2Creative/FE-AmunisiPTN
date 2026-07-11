@@ -49,7 +49,7 @@ export const useInfiniteGetTryoutLeaderboard = ({
 }: {
   tryoutId: string;
   token: string;
-  options?: Partial<UseInfiniteQueryOptions<GetTryoutLeaderboardResponse, AxiosError>>;
+  options?: any;
 }) => {
   return useInfiniteQuery({
     queryKey: ["get-tryout-leaderboard-infinite", tryoutId],
