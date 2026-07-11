@@ -59,8 +59,12 @@ export const packageColumns: (
       const { price, discount_price } = row.original;
       return discount_price ? (
         <div suppressHydrationWarning className="flex flex-col">
-          <span className="line-through text-gray-400 text-xs">{formatPrice(price)}</span>
-          <span className="text-green-600 font-semibold">{formatPrice(discount_price)}</span>
+          <span className="line-through text-gray-400 text-xs">
+            {formatPrice(price)}
+          </span>
+          <span className="text-green-600 font-semibold">
+            {formatPrice(discount_price)}
+          </span>
         </div>
       ) : (
         <p suppressHydrationWarning>{formatPrice(price)}</p>
@@ -77,8 +81,8 @@ export const packageColumns: (
         <Badge
           className={
             isActive
-              ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs"
-              : "bg-red-100 text-red-700 hover:bg-red-100 text-xs"
+              ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs uppercase"
+              : "bg-red-100 text-red-700 hover:bg-red-100 text-xs uppercase"
           }
         >
           {isActive ? "Aktif" : "Tidak Aktif"}

@@ -50,7 +50,7 @@ export const redeemCodeColumns: (
     header: "Status",
     cell: ({ row }) => (
       <span
-        className={`rounded-full px-3 py-1 text-xs font-bold ${
+        className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
           row.original.is_active
             ? "bg-green-100 text-green-700"
             : "bg-gray-100 text-gray-600"

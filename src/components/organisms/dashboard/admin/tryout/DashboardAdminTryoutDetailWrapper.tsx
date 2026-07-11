@@ -20,6 +20,7 @@ import { SubtestByTryout } from "@/types/subtest/subtest";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DashboardAdminTryoutDetailWrapperProps {
   id: string;
@@ -109,7 +110,9 @@ export default function DashboardAdminTryoutDetailWrapper({
   };
 
   return (
-    <section>
+    <section className="space-y-6">
+      <Card>
+        <CardContent>
           <div className="grid xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
             <div className="flex flex-col gap-1">
               <h3 className="text-muted-foreground">Judul Tryout</h3>
@@ -197,49 +200,51 @@ export default function DashboardAdminTryoutDetailWrapper({
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="space-y-3">
-            <div className="flex md:items-center md:flex-row flex-col md:justify-between gap-4">
-              <h3 className="font-medium text-lg">Subtes</h3>
-              <div className="flex md:flex-row flex-wrap gap-3 items-center">
-                <Button size={"lg"} variant={"outline"} asChild>
-                  <Link href={`/dashboard/admin/try-out/${id}/participants`}>
-                    <Users className="mr-2 h-4 w-4" /> Lihat Peserta
-                  </Link>
-                </Button>
-                <Button size={"lg"} variant={"outline"} asChild>
-                  <Link href={`/dashboard/admin/try-out/${id}/result`}>
-                    <Eye className="mr-2 h-4 w-4" /> Lihat Hasil
-                  </Link>
-                </Button>
-                <Button
-                  size={"lg"}
-                  variant={"outline"}
-                  onClick={handleDownloadPdf}
-                  disabled={isDownloadingPdf}
-                >
-                  <Download
-                    className={
-                      isDownloadingPdf
-                        ? "animate-pulse mr-2 h-4 w-4"
-                        : "mr-2 h-4 w-4"
-                    }
-                  />{" "}
-                  Download PDF
-                </Button>
-                <Button size={"lg"} onClick={handleOpenDialog}>
-                  <Plus className="mr-2 h-4 w-4" /> Tambahkan Subtes
-                </Button>
-              </div>
-            </div>
-            <DataTable
-              columns={subtestTryoutColumns({
-                deleteHandler: handleDeleteClick,
-              })}
-              data={subtest?.data ?? []}
-              isLoading={isPendingSubtest}
-            />
+      <div className="space-y-3">
+        <div className="flex md:items-center md:flex-row flex-col md:justify-between gap-4">
+          <h3 className="font-medium text-lg">Subtes</h3>
+          <div className="flex md:flex-row flex-wrap gap-3 items-center">
+            <Button size={"lg"} variant={"outline"} asChild>
+              <Link href={`/dashboard/admin/try-out/${id}/participants`}>
+                <Users className="mr-2 h-4 w-4" /> Lihat Peserta
+              </Link>
+            </Button>
+            <Button size={"lg"} variant={"outline"} asChild>
+              <Link href={`/dashboard/admin/try-out/${id}/result`}>
+                <Eye className="mr-2 h-4 w-4" /> Lihat Hasil
+              </Link>
+            </Button>
+            <Button
+              size={"lg"}
+              variant={"outline"}
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+            >
+              <Download
+                className={
+                  isDownloadingPdf
+                    ? "animate-pulse mr-2 h-4 w-4"
+                    : "mr-2 h-4 w-4"
+                }
+              />{" "}
+              Download PDF
+            </Button>
+            <Button size={"lg"} onClick={handleOpenDialog}>
+              <Plus className="mr-2 h-4 w-4" /> Tambahkan Subtes
+            </Button>
           </div>
+        </div>
+        <DataTable
+          columns={subtestTryoutColumns({
+            deleteHandler: handleDeleteClick,
+          })}
+          data={subtest?.data ?? []}
+          isLoading={isPendingSubtest}
+        />
+      </div>
 
       <DialogCreateSubtestTryout
         open={isDialogOpen}

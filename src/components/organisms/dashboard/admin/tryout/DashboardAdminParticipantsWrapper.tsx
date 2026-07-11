@@ -69,48 +69,38 @@ export default function DashboardAdminParticipantsWrapper({
   };
 
   return (
-    <section>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h3 className="text-lg font-semibold">Daftar Peserta</h3>
-              <p className="text-sm text-muted-foreground">
-                Daftar semua peserta tryout dan bukti follow jika diunggah.
-              </p>
-            </div>
-            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="finished">Sudah Mengerjakan</SelectItem>
-                  <SelectItem value="in_progress">
-                    Sedang Mengerjakan
-                  </SelectItem>
-                  <SelectItem value="not_started">Belum Mengerjakan</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="relative w-full md:w-72">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Cari nama atau email..."
-                  className="w-full pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <DataTable
-            columns={participantsColumns({
-              viewDetailHandler: handleViewDetail,
-              isFree,
-            })}
-            data={accesses}
-            isLoading={isPending}
+    <section className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full md:w-[200px]">
+            <SelectValue placeholder="Filter Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Status</SelectItem>
+            <SelectItem value="finished">Sudah Mengerjakan</SelectItem>
+            <SelectItem value="in_progress">Sedang Mengerjakan</SelectItem>
+            <SelectItem value="not_started">Belum Mengerjakan</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Cari nama atau email..."
+            className="w-full pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
+        </div>
+      </div>
+      <DataTable
+        columns={participantsColumns({
+          viewDetailHandler: handleViewDetail,
+          isFree,
+        })}
+        data={accesses}
+        isLoading={isPending}
+      />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto">

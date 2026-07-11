@@ -42,9 +42,10 @@ export default function TryoutCard({
     hasAttempted,
     inProgress,
   });
-  const buttonHref = isEnrolled
-    ? `/dashboard/try-out/${id}/start`
-    : `/dashboard/try-out/${id}`;
+  let buttonHref = `/dashboard/try-out/${id}`;
+  if (isEnrolled && (inProgress || !hasAttempted)) {
+    buttonHref = `/dashboard/try-out/${id}/start`;
+  }
 
   const [statusText, setStatusText] = useState("Menghitung...");
   const [statusTheme, setStatusTheme] = useState("bg-gray-400"); // for the left tag
