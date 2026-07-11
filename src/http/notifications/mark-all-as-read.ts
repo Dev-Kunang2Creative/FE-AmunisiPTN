@@ -16,7 +16,7 @@ export const useMarkAllAsRead = (token: string) => {
   return useMutation<void, AxiosError, void>({
     mutationFn: () => MarkAllAsReadHandler(token),
     onSuccess: () => {
-      // Invalidate to refresh the unread count and the notifications list
+      // Invalidate to refresh the notifications list
       queryClient.invalidateQueries({ queryKey: ["get-notifications"] });
       queryClient.invalidateQueries({ queryKey: ["get-unread-count"] });
     },

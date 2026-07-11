@@ -1,11 +1,18 @@
+export interface NotificationData {
+  type: string;
+  title: string;
+  description: string;
+  ticket_report_id?: string;
+  [key: string]: any;
+}
+
 export interface Notification {
   id: string;
-  user_id: string;
-  title: string;
-  message: string;
   type: string;
-  reference_id: string; // The ID of the related entity (e.g., ticket_report_id)
-  is_read: boolean;
+  notifiable_type: string;
+  notifiable_id: string;
+  data: NotificationData;
+  read_at: string | null;
   created_at: string;
   updated_at: string;
 }

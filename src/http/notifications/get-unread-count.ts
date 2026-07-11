@@ -3,7 +3,10 @@ import type { AxiosError } from "axios";
 import { api } from "@/lib/axios";
 
 export interface GetUnreadCountResponse {
-  unread_count: number;
+  success: boolean;
+  data: {
+    unread_count: number;
+  };
 }
 
 export const GetUnreadCountHandler = async (

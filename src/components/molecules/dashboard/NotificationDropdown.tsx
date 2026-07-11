@@ -21,9 +21,6 @@ export default function NotificationDropdown() {
   const token = session?.access_token || "";
   const router = useRouter();
 
-  const { data: unreadData } = useGetUnreadCount({ token });
-  const unreadCount = unreadData?.unread_count || 0;
-
   const { data: notificationsData, isLoading } = useGetNotifications({
     token,
     page: 1,
@@ -31,18 +28,21 @@ export default function NotificationDropdown() {
   });
   const notifications = notificationsData?.data || [];
 
+  const { data: unreadData } = useGetUnreadCount({ token });
+  const unreadCount = unreadData?.data?.unread_count || 0;
+
   const markAsReadMutation = useMarkAsRead(token);
   const markAllAsReadMutation = useMarkAllAsRead(token);
 
   const handleNotificationClick = (notification: any) => {
-    if (!notification.is_read) {
+    if (!notification.read_at) {
       markAsReadMutation.mutate({ notification_id: notification.id });
     }
 
-    if (notification.reference_id) {
+    if (notification.data?.ticket_report_id) {
       // Assuming navigation to ticket report details
       router.push(
-        `/dashboard/bantuan/laporan-kendala/${notification.reference_id}`,
+        `/dashboard/bantuan/laporan-kendala/${notification.data.ticket_report_id}`,
       );
     }
   };
@@ -104,18 +104,18 @@ export default function NotificationDropdown() {
               </p>
             </div>
           ) : (
-            notifications.map((notification) => (
+            notifications.map((notification: any) => (
               <DropdownMenuItem
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
                 className={`flex flex-col items-start gap-1 p-3 cursor-pointer rounded-md ${
-                  !notification.is_read ? "bg-blue-50/50" : ""
+                  !notification.read_at ? "bg-blue-50/50" : ""
                 }`}
               >
                 <div className="flex items-start gap-3 w-full">
                   <div
                     className={`mt-0.5 rounded-full p-1.5 shrink-0 ${
-                      !notification.is_read
+                      !notification.read_at
                         ? "bg-blue-100 text-primary"
                         : "bg-gray-100 text-gray-500"
                     }`}
@@ -124,12 +124,12 @@ export default function NotificationDropdown() {
                   </div>
                   <div className="flex-1 space-y-1">
                     <p
-                      className={`text-sm ${!notification.is_read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
+                      className={`text-sm ${!notification.read_at ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
                     >
-                      {notification.title}
+                      {notification.data?.title}
                     </p>
                     <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                      {notification.message}
+                      {notification.data?.description}
                     </p>
                     <p className="text-[10px] text-gray-400 pt-1">
                       {new Date(notification.created_at).toLocaleDateString(
@@ -143,7 +143,7 @@ export default function NotificationDropdown() {
                       )}
                     </p>
                   </div>
-                  {!notification.is_read && (
+                  {!notification.read_at && (
                     <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
                   )}
                 </div>
